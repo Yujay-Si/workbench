@@ -19,13 +19,22 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - name: Build and publish installers
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: npx electron-builder --win nsis --win portable --x64 --publish always
+      - name: Build installers
+        run: npx electron-builder --win nsis --win portable --x64 --publish never
       - name: Prepare portable update feed
         run: node scripts/prepare-release.cjs
-      - name: Upload portable update feed
+      - name: Publish one complete release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$env:GITHUB_REF_NAME" dist/latest.json --repo Yujay-Si/workbench --clobber
+        run: |
+          $version = node -p "require('./package.json').version"
+          if ($env:GITHUB_REF_NAME -ne "v$version") { throw 'Git 标签与 package.json 版本不一致' }
+          $assets = @(
+            "dist/NEXUS-Workbench-Setup-$version-win-x64.exe"
+            "dist/NEXUS-Workbench-Setup-$version-win-x64.exe.blockmap"
+            "dist/NEXUS-Workbench-$version-win-x64.exe"
+            'dist/latest.yml'
+            'dist/latest.json'
+          )
+          gh release create $env:GITHUB_REF_NAME @assets --repo Yujay-Si/workbench --title "NEXUS 个人工作台 v$version" --generate-notes --verify-tag --latest
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
