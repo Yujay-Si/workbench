@@ -66,9 +66,9 @@ npm run dist:win
 }
 ```
 
-发布时，源码仓库 `Yujay-Si/workbench` 应保持私有；`Yujay-Si/workbench-releases` 只放公开的发布产物，不上传工作台用户数据、源码备份或凭据。**线上检查更新需要公开发布仓库存在，并且其中已有可访问的版本及对应文件。**发布后的 EXE 本身仍可被下载和分析，因此不要将密钥或私密业务数据写进打包源码。
+源码仓库 `Yujay-Si/workbench` 公开发布项目代码；`Yujay-Si/workbench-releases` 公开存放发布产物。不要向这两个仓库上传工作台用户数据、源码备份或凭据。**线上检查更新需要公开发布仓库存在，并且其中已有可访问的版本及对应文件。**发布后的 EXE 本身仍可被下载和分析，因此不要将密钥或私密业务数据写进打包源码。
 
-首次发布前，在私有源码仓库的 Actions secrets 中配置 `WORKBENCH_RELEASE_TOKEN`：对公开发布仓库授予 Contents 读写权限的细粒度 GitHub token。不要把 token 写到本项目文件或聊天中。将本地源码安全同步到私有仓库后，提升 `package.json` 版本并推送匹配的 `v版本号` 标签；`.github/workflows/release.yml` 会运行测试、构建两种 EXE、发布安装包及 `latest.yml`，再上传免安装版的 `latest.json`。修改源码后必须完成一次新的版本发布，旧 EXE 才能发现更新。
+首次发布前，在源码仓库的 Actions secrets 中配置 `WORKBENCH_RELEASE_TOKEN`：对公开发布仓库授予 Contents 读写权限的细粒度 GitHub token。不要把 token 写到本项目文件或聊天中。将本地源码安全同步到公开源码仓库后，提升 `package.json` 版本并推送匹配的 `v版本号` 标签；`.github/workflows/release.yml` 会运行测试、构建两种 EXE、发布安装包及 `latest.yml`，再上传免安装版的 `latest.json`。修改源码后必须完成一次新的版本发布，旧 EXE 才能发现更新。
 
 开发机上运行 `npm ci`、`npm test`、`npm run dist:win`、`npm run release:prepare` 可生成并检查本地发布产物。构建产物在 `dist`，该目录和 `node_modules` 不属于项目源文件。首次运行未签名的 EXE 时，Windows 可能提示发布者未知；面向更多设备分发前建议用受信任证书签名。
 
