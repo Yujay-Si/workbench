@@ -16,8 +16,8 @@ app.setPath('userData', path.join(app.getPath('appData'), 'NEXUS-Workbench'));
 const configPath = path.join(app.getPath('userData'), 'update.json');
 const entryUrl = 'nexus://app/nexus-workbench.html';
 const isPortable = Boolean(process.env.PORTABLE_EXECUTABLE_FILE);
-const publicFeedUrl = 'https://github.com/Yujay-Si/workbench-releases/releases/latest/download/latest.json';
-const publicReleasePage = 'https://github.com/Yujay-Si/workbench-releases/releases/latest';
+const publicFeedUrl = 'https://github.com/Yujay-Si/workbench/releases/latest/download/latest.json';
+const publicReleasePage = 'https://github.com/Yujay-Si/workbench/releases/latest';
 let updaterState = { status: 'idle' };
 
 function publishUpdaterState(next) {

@@ -28,7 +28,7 @@
     "publish": {
       "provider": "github",
       "owner": "Yujay-Si",
-      "repo": "workbench-releases",
+      "repo": "workbench",
       "releaseType": "release"
     },
     "win": {

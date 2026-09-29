@@ -54,21 +54,21 @@ npm run dist:win
 
 从原浏览器迁移：先在原页面点击「导出备份」，再在 EXE 中点击「导入恢复」并选择 JSON 文件。导入会覆盖 EXE 当前用户数据，操作前先另存备份。换电脑时同样通过导出、导入迁移。
 
-侧栏「数据」区有「版本与更新」入口。安装版默认从公开发布仓库 `Yujay-Si/workbench-releases` 检查更新，启动后约 5 秒自动检查，也可以手动检查；发现新版后自动下载，点击「重启并安装」才会关闭程序并安装。免安装版默认检查同一仓库的 `latest.json`，下载后仍需双击新版 EXE；也可点击「选择本地新版」定位已传来的文件。安装版和免安装版不会在后台静默覆盖正在使用的程序。
+侧栏「数据」区有「版本与更新」入口。安装版默认从公开仓库 `Yujay-Si/workbench` 的 Release 检查更新，启动后约 5 秒自动检查，也可以手动检查；发现新版后自动下载，点击「重启并安装」才会关闭程序并安装。免安装版默认检查同一仓库的 `latest.json`，下载后仍需双击新版 EXE；也可点击「选择本地新版」定位已传来的文件。安装版和免安装版不会在后台静默覆盖正在使用的程序。
 
-免安装版的默认更新清单地址是 `https://github.com/Yujay-Si/workbench-releases/releases/latest/download/latest.json`。应用内可以改为其他 HTTPS 地址。清单格式由 `scripts/prepare-release.cjs` 在构建后生成，例如：
+免安装版的默认更新清单地址是 `https://github.com/Yujay-Si/workbench/releases/latest/download/latest.json`。应用内可以改为其他 HTTPS 地址。清单格式由 `scripts/prepare-release.cjs` 在构建后生成，例如：
 
 ```json
 {
   "version": "1.1.0",
-  "downloadUrl": "https://github.com/Yujay-Si/workbench-releases/releases/download/v1.1.0/NEXUS-Workbench-1.1.0-win-x64.exe",
+  "downloadUrl": "https://github.com/Yujay-Si/workbench/releases/download/v1.1.0/NEXUS-Workbench-1.1.0-win-x64.exe",
   "sha256": "..."
 }
 ```
 
-源码仓库 `Yujay-Si/workbench` 公开发布项目代码；`Yujay-Si/workbench-releases` 公开存放发布产物。不要向这两个仓库上传工作台用户数据、源码备份或凭据。**线上检查更新需要公开发布仓库存在，并且其中已有可访问的版本及对应文件。**发布后的 EXE 本身仍可被下载和分析，因此不要将密钥或私密业务数据写进打包源码。
+仓库 `Yujay-Si/workbench` 公开发布项目代码和桌面版产物。不要上传工作台用户数据、源码备份或凭据。**线上检查更新需要仓库中已有可访问的 Release 及对应文件。**发布后的 EXE 本身仍可被下载和分析，因此不要将密钥或私密业务数据写进打包源码。
 
-首次发布前，在源码仓库的 Actions secrets 中配置 `WORKBENCH_RELEASE_TOKEN`：对公开发布仓库授予 Contents 读写权限的细粒度 GitHub token。不要把 token 写到本项目文件或聊天中。将本地源码安全同步到公开源码仓库后，提升 `package.json` 版本并推送匹配的 `v版本号` 标签；`.github/workflows/release.yml` 会运行测试、构建两种 EXE、发布安装包及 `latest.yml`，再上传免安装版的 `latest.json`。修改源码后必须完成一次新的版本发布，旧 EXE 才能发现更新。
+将本地源码同步到公开仓库后，提升 `package.json` 版本并推送匹配的 `v版本号` 标签；`.github/workflows/release.yml` 使用仓库自带的 `GITHUB_TOKEN` 运行测试、构建两种 EXE、发布安装包及 `latest.yml`，再上传免安装版的 `latest.json`。无需配置额外的发布 Token，也不要把凭据写到项目文件或聊天中。修改源码后必须完成一次新的版本发布，旧 EXE 才能发现更新。
 
 开发机上运行 `npm ci`、`npm test`、`npm run dist:win`、`npm run release:prepare` 可生成并检查本地发布产物。构建产物在 `dist`，该目录和 `node_modules` 不属于项目源文件。首次运行未签名的 EXE 时，Windows 可能提示发布者未知；面向更多设备分发前建议用受信任证书签名。
 

@@ -6,7 +6,7 @@ on:
       - 'v*'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   release:
@@ -21,11 +21,11 @@ jobs:
       - run: npm test
       - name: Build and publish installers
         env:
-          GH_TOKEN: ${{ secrets.WORKBENCH_RELEASE_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: npx electron-builder --win nsis --win portable --x64 --publish always
       - name: Prepare portable update feed
         run: node scripts/prepare-release.cjs
       - name: Upload portable update feed
         env:
-          GH_TOKEN: ${{ secrets.WORKBENCH_RELEASE_TOKEN }}
-        run: gh release upload "$env:GITHUB_REF_NAME" dist/latest.json --repo Yujay-Si/workbench-releases --clobber
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$env:GITHUB_REF_NAME" dist/latest.json --repo Yujay-Si/workbench --clobber
