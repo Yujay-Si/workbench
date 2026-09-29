@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+backups/
+.workbuddy/
+screenshots/
+.tmp-*
+*.before-*.html
+*.before-*.md
+*.before-*.json

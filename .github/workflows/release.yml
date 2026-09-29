@@ -1,0 +1,31 @@
+name: Publish NEXUS Windows release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Build and publish installers
+        env:
+          GH_TOKEN: ${{ secrets.WORKBENCH_RELEASE_TOKEN }}
+        run: npx electron-builder --win nsis --win portable --x64 --publish always
+      - name: Prepare portable update feed
+        run: node scripts/prepare-release.cjs
+      - name: Upload portable update feed
+        env:
+          GH_TOKEN: ${{ secrets.WORKBENCH_RELEASE_TOKEN }}
+        run: gh release upload "$env:GITHUB_REF_NAME" dist/latest.json --repo Yujay-Si/workbench-releases --clobber

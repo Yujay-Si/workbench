@@ -1,0 +1,62 @@
+{
+  "name": "nexus-workbench-desktop",
+  "version": "1.1.0",
+  "private": true,
+  "description": "NEXUS 个人工作台 Windows 桌面版",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.cjs",
+    "dist:win": "electron-builder --win nsis --win portable --x64 --publish never",
+    "release:prepare": "node scripts/prepare-release.cjs"
+  },
+  "devDependencies": {
+    "electron": "44.4.5",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "cn.nexus.workbench",
+    "productName": "NEXUS Workbench",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "nexus-workbench.html",
+      "desktop/**/*",
+      "package.json"
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "Yujay-Si",
+      "repo": "workbench-releases",
+      "releaseType": "release"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "artifactName": "NEXUS-Workbench-Setup-${version}-win-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "NEXUS-Workbench-${version}-win-${arch}.${ext}"
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
+  }
+}
