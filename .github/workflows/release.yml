@@ -36,5 +36,8 @@ jobs:
             'dist/latest.yml'
             'dist/latest.json'
           )
-          gh release create $env:GITHUB_REF_NAME @assets --repo Yujay-Si/workbench --title "NEXUS 个人工作台 v$version" --generate-notes --verify-tag --latest
+          $notesFile = ".github/releases/v$version.md"
+          if (Test-Path $notesFile) { $notesArgs = @('--notes-file', $notesFile) }
+          else { $notesArgs = @('--generate-notes') }
+          gh release create $env:GITHUB_REF_NAME @assets --repo Yujay-Si/workbench --title "NEXUS 个人工作台 v$version" @notesArgs --verify-tag --latest
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

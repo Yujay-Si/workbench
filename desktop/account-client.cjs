@@ -31,6 +31,12 @@ function createAccountClient(configFile, fetchImpl = fetch) {
     return { ok: true, url };
   }
 
+  function useLocalUrl(url) {
+    if (!validServerUrl(url) || !url.startsWith('http://127.0.0.1:')) throw new Error('本机服务地址无效');
+    serverUrl = url;
+    token = '';
+  }
+
   async function request(method, route, body) {
     try {
       const response = await fetchImpl(serverUrl + route, {
@@ -59,6 +65,7 @@ function createAccountClient(configFile, fetchImpl = fetch) {
   return {
     getServerUrl: () => ({ url: serverUrl }),
     setServerUrl,
+    useLocalUrl,
     register: (username, password) => request('POST', '/api/register', { username, password }),
     login: (username, password) => request('POST', '/api/login', { username, password }),
     logout: () => request('POST', '/api/logout', {}),

@@ -5,7 +5,8 @@ const { pathToFileURL } = require('node:url');
 const { autoUpdater } = require('electron-updater');
 const update = require('./update.cjs');
 const localApps = require('./local-apps.cjs');
-const { createAccountClient } = require('./account-client.cjs');
+const { createAccountClient, LOCAL_SERVER } = require('./account-client.cjs');
+const { createServer } = require('../server/index.cjs');
 
 // 固定 origin，避免便携版换目录或升级后 localStorage 被视为另一份数据。
 protocol.registerSchemesAsPrivileged([{
@@ -17,6 +18,7 @@ protocol.registerSchemesAsPrivileged([{
 app.setPath('userData', path.join(app.getPath('appData'), 'NEXUS-Workbench'));
 const configPath = path.join(app.getPath('userData'), 'update.json');
 const accountClient = createAccountClient(path.join(app.getPath('userData'), 'server.json'));
+let localAccountService = null;
 const entryUrl = 'nexus://app/nexus-workbench.html';
 const isPortable = Boolean(process.env.PORTABLE_EXECUTABLE_FILE);
 const publicFeedUrl = 'https://github.com/Yujay-Si/workbench/releases/latest/download/latest.json';
@@ -78,6 +80,34 @@ function writeStartupError(message) {
     fs.appendFileSync(path.join(app.getPath('userData'), 'startup.log'),
       new Date().toISOString() + ' ' + message + '\n', 'utf8');
   } catch { /* 日志失败不阻断错误页面。 */ }
+}
+
+async function ensureLocalAccountService() {
+  if (accountClient.getServerUrl().url !== LOCAL_SERVER) return;
+  try {
+    const response = await fetch(LOCAL_SERVER + '/api/session', { signal: AbortSignal.timeout(1000) });
+    if (response.ok && Object.hasOwn(await response.json(), 'account')) return;
+  } catch { /* 本机预览服务未启动，改用 EXE 内置的账号服务。 */ }
+
+  const service = createServer({ databaseFile: path.join(app.getPath('userData'), 'accounts.sqlite') });
+  function listen(port) {
+    return new Promise((resolve, reject) => {
+      service.server.once('error', reject);
+      service.server.listen(port, '127.0.0.1', () => {
+        service.server.removeListener('error', reject);
+        resolve();
+      });
+    });
+  }
+  try {
+    await listen(8768);
+  } catch (error) {
+    if (error.code !== 'EADDRINUSE') { service.store.db.close(); throw error; }
+    // 端口被其他程序占用时仍让桌面版使用自己的本机数据库。
+    await listen(0);
+    accountClient.useLocalUrl(`http://127.0.0.1:${service.server.address().port}`);
+  }
+  localAccountService = service;
 }
 
 function loadWorkbench(win) {
@@ -231,7 +261,12 @@ function trustedAccountFrame(event) {
 }
 
 ipcMain.handle('nexus:account-server-info', (event) => { trustedAccountFrame(event); return accountClient.getServerUrl(); });
-ipcMain.handle('nexus:account-server-save', (event, url) => { trustedAccountFrame(event); return accountClient.setServerUrl(url); });
+ipcMain.handle('nexus:account-server-save', async (event, url) => {
+  trustedAccountFrame(event);
+  const result = accountClient.setServerUrl(url);
+  if (result.url === LOCAL_SERVER) await ensureLocalAccountService();
+  return result;
+});
 ipcMain.handle('nexus:account-register', (event, username, password) => {
   trustedAccountFrame(event); return accountClient.register(username, password);
 });
@@ -245,7 +280,7 @@ ipcMain.handle('nexus:account-save', (event, revision, data) => {
   trustedAccountFrame(event); return accountClient.saveWorkspace(revision, data);
 });
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   const allowed = {
     '/nexus-workbench.html': path.join(__dirname, '..', 'nexus-workbench.html'),
     '/desktop/ui.js': path.join(__dirname, 'ui.js')
@@ -257,6 +292,8 @@ app.whenReady().then(() => {
     const file = url.hostname === 'app' ? allowed[url.pathname] : null;
     return file ? net.fetch(pathToFileURL(file).href) : new Response('Not found', { status: 404 });
   });
+  try { await ensureLocalAccountService(); }
+  catch (error) { writeStartupError('本机账号服务启动失败：' + error.message); }
   createWindow();
   configureInstalledUpdater();
   app.on('activate', () => {
@@ -265,3 +302,10 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => app.quit());
+app.on('before-quit', () => {
+  if (localAccountService) {
+    localAccountService.server.close();
+    localAccountService.store.db.close();
+    localAccountService = null;
+  }
+});
