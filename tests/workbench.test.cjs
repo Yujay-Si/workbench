@@ -8,7 +8,7 @@ function loadWorkbench() {
   const html = fs.readFileSync(path.join(__dirname, '..', 'nexus-workbench.html'), 'utf8');
   const script = html.match(/<script>([\s\S]*?)<\/script>/)[1].replace(
     /\}\)\(\);\s*$/,
-    'globalThis.workbenchTest = { state, Store, commit, seedData, newsItems, setTaskStatus, rolloverOverdue, generateRecurring, normalizeImport: typeof normalizeImport === "function" ? normalizeImport : undefined, safeHttpUrl: typeof safeHttpUrl === "function" ? safeHttpUrl : undefined, taskDelayDays: typeof taskDelayDays === "function" ? taskDelayDays : undefined, searchRecords: typeof searchRecords === "function" ? searchRecords : undefined, searchResultHTML: typeof searchResultHTML === "function" ? searchResultHTML : undefined, addDays, todayStr };})();'
+    'globalThis.workbenchTest = { state, Store, commit, seedData, removeLegacyExamples, migrateAppPack, localAppId, launchApp, appCardHTML, newsItems, setTaskStatus, rolloverOverdue, generateRecurring, normalizeImport: typeof normalizeImport === "function" ? normalizeImport : undefined, safeHttpUrl: typeof safeHttpUrl === "function" ? safeHttpUrl : undefined, taskDelayDays: typeof taskDelayDays === "function" ? taskDelayDays : undefined, searchRecords: typeof searchRecords === "function" ? searchRecords : undefined, searchResultHTML: typeof searchResultHTML === "function" ? searchResultHTML : undefined, addDays, todayStr };})();'
   );
   const values = new Map();
   const storage = {
@@ -29,7 +29,7 @@ function loadWorkbench() {
     window: {}
   };
   vm.runInNewContext(script, context, { filename: 'nexus-workbench.html' });
-  return { ...context.workbenchTest, storage };
+  return { ...context.workbenchTest, storage, browserWindow: context.window };
 }
 
 test('a fresh workbench contains no demonstration records or news', () => {
@@ -40,6 +40,49 @@ test('a fresh workbench contains no demonstration records or news', () => {
   assert.equal(initial.memos.length, 0);
   assert.ok(initial.links.every(link => !link.demo));
   assert.equal(wb.newsItems('international').length, 0);
+  assert.deepEqual(Array.from(initial.links, link => wb.localAppId(link)), ['wechat', 'qq', 'wps', 'workbuddy']);
+});
+
+test('legacy cleanup removes marked examples and Notion while preserving user data', () => {
+  const wb = loadWorkbench();
+  wb.state.tasks = [
+    { id: 'sample', demo: true }, { id: 'generated', recurringId: 'rule' }, { id: 'own', title: '我的任务' }
+  ];
+  wb.state.recurring = [{ id: 'rule', demo: true }, { id: 'own-rule' }];
+  wb.state.memos = [{ id: 'sample-memo', demo: true }, { id: 'own-memo' }];
+  wb.state.links = [{ id: 'notion', name: 'Notion' }, { id: 'sample-link', demo: true }, { id: 'qq', name: 'QQ' }];
+  wb.removeLegacyExamples();
+  assert.deepEqual(Array.from(wb.state.tasks, x => x.id), ['own']);
+  assert.deepEqual(Array.from(wb.state.recurring, x => x.id), ['own-rule']);
+  assert.deepEqual(Array.from(wb.state.memos, x => x.id), ['own-memo']);
+  assert.deepEqual(Array.from(wb.state.links, x => x.id), ['qq']);
+});
+
+test('old built-in web buttons migrate to desktop launch mode', () => {
+  const wb = loadWorkbench();
+  wb.state.settings.appPack = 3;
+  wb.state.links = [
+    { id: 'qq', name: 'QQ', kind: 'web' },
+    { id: 'wps', name: 'WPS 云文档', kind: 'web' },
+    { id: 'workbuddy', name: 'WorkBuddy', kind: 'download' }
+  ];
+  wb.migrateAppPack();
+  assert.ok(wb.state.links.every(link => link.kind === 'local'));
+  assert.equal(wb.state.settings.appPack, 4);
+});
+
+test('all built-in cards launch desktop applications without opening a website', () => {
+  const wb = loadWorkbench();
+  const calls = [];
+  wb.browserWindow.nexusDesktop = {
+    openLocalApp: id => { calls.push(id); return Promise.resolve({ status: 'opened' }); },
+    openExternal: () => { throw new Error('website must not open'); }
+  };
+  for (const app of wb.seedData().links) {
+    assert.match(wb.appCardHTML(app), /data-act="app-launch"/);
+    wb.launchApp(app);
+  }
+  assert.deepEqual(calls, ['wechat', 'qq', 'wps', 'workbuddy']);
 });
 
 test('completing a repeated task twice generates one successor', () => {
@@ -80,11 +123,14 @@ test('links from imported data accept only http and https URLs', () => {
   assert.equal(wb.safeHttpUrl('https://example.com'), 'https://example.com/');
 });
 
-test('saving the workbench does not persist the news API key in main data', () => {
+test('saving the workbench omits the news API key from synced data', async () => {
   const wb = loadWorkbench();
+  let snapshot;
+  wb.Store.sync = { save: async data => { snapshot = data; return true; } };
   wb.state.news.key = 'private-key';
-  assert.equal(wb.Store.save(wb.state), true);
-  assert.equal(JSON.parse(wb.storage.getItem('wb_nexus_v1')).news.key, undefined);
+  assert.equal(await wb.Store.save(wb.state), true);
+  assert.equal(snapshot.news.key, undefined);
+  assert.equal(wb.storage.getItem('wb_nexus_v1'), null);
 });
 
 test('overdue duration is calculated without changing the due date', () => {
@@ -94,10 +140,10 @@ test('overdue duration is calculated without changing the due date', () => {
   assert.equal(task.due, wb.addDays(wb.todayStr(), -2));
 });
 
-test('commit reports a failed browser save', () => {
+test('commit reports a failed server save', async () => {
   const wb = loadWorkbench();
-  wb.storage.setItem = () => { throw new Error('quota exceeded'); };
-  assert.equal(wb.commit(), false);
+  wb.Store.sync = { save: async () => false };
+  assert.equal(await wb.commit(), false);
 });
 
 test('import rejects attribute injection in record identifiers', () => {
@@ -105,19 +151,20 @@ test('import rejects attribute injection in record identifiers', () => {
   assert.throws(() => wb.normalizeImport({ tasks: [{ id: 'x" onclick="alert(1)', title: '任务' }] }), /ID/);
 });
 
-test('invalid local data is not overwritten with demo content', () => {
+test('legacy local data is left untouched by account storage', async () => {
   const wb = loadWorkbench();
   wb.storage.setItem('wb_nexus_v1', '{broken json');
-  assert.equal(wb.Store.load(), null);
-  assert.equal(wb.Store.save(wb.state), false);
+  await assert.rejects(wb.Store.load(), /请先登录/);
+  assert.equal(await wb.Store.save(wb.state), false);
   assert.equal(wb.storage.getItem('wb_nexus_v1'), '{broken json');
 });
 
-test('wrong-shaped local data is also preserved for recovery', () => {
+test('account storage never reads legacy local data', async () => {
   const wb = loadWorkbench();
   wb.storage.setItem('wb_nexus_v1', '{"tasks":{"not":"a list"}}');
-  assert.equal(wb.Store.load(), null);
-  assert.equal(wb.Store.save(wb.state), false);
+  await assert.rejects(wb.Store.load(), /请先登录/);
+  assert.equal(await wb.Store.save(wb.state), false);
+  assert.equal(wb.storage.getItem('wb_nexus_v1'), '{"tasks":{"not":"a list"}}');
 });
 
 test('weekly catch-up generates only scheduled dates and remains idempotent', () => {

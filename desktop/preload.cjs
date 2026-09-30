@@ -13,6 +13,15 @@ contextBridge.exposeInMainWorld('nexusDesktop', Object.freeze({
   },
   chooseLocal: () => ipcRenderer.invoke('nexus:update-choose-local'),
   openProtocol: (url) => ipcRenderer.invoke('nexus:open-protocol', url),
+  openLocalApp: (appId) => ipcRenderer.invoke('nexus:open-local-app', appId),
   openExternal: (url) => ipcRenderer.invoke('nexus:open-external', url),
+  accountServerInfo: () => ipcRenderer.invoke('nexus:account-server-info'),
+  accountServerSave: (url) => ipcRenderer.invoke('nexus:account-server-save', url),
+  accountRegister: (username, password) => ipcRenderer.invoke('nexus:account-register', username, password),
+  accountLogin: (username, password) => ipcRenderer.invoke('nexus:account-login', username, password),
+  accountLogout: () => ipcRenderer.invoke('nexus:account-logout'),
+  accountSession: () => ipcRenderer.invoke('nexus:account-session'),
+  accountWorkspace: () => ipcRenderer.invoke('nexus:account-workspace'),
+  accountSave: (revision, data) => ipcRenderer.invoke('nexus:account-save', revision, data),
   retryLoad: () => ipcRenderer.invoke('nexus:retry-load')
 }));

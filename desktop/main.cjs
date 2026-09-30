@@ -4,6 +4,8 @@ const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
 const { autoUpdater } = require('electron-updater');
 const update = require('./update.cjs');
+const localApps = require('./local-apps.cjs');
+const { createAccountClient } = require('./account-client.cjs');
 
 // 固定 origin，避免便携版换目录或升级后 localStorage 被视为另一份数据。
 protocol.registerSchemesAsPrivileged([{
@@ -14,6 +16,7 @@ protocol.registerSchemesAsPrivileged([{
 // 固定目录保证新版 EXE 放到任何位置时都继续使用同一份本机数据。
 app.setPath('userData', path.join(app.getPath('appData'), 'NEXUS-Workbench'));
 const configPath = path.join(app.getPath('userData'), 'update.json');
+const accountClient = createAccountClient(path.join(app.getPath('userData'), 'server.json'));
 const entryUrl = 'nexus://app/nexus-workbench.html';
 const isPortable = Boolean(process.env.PORTABLE_EXECUTABLE_FILE);
 const publicFeedUrl = 'https://github.com/Yujay-Si/workbench/releases/latest/download/latest.json';
@@ -115,6 +118,7 @@ function createWindow() {
     minWidth: 900,
     minHeight: 620,
     title: 'NEXUS · 工作台',
+    icon: path.join(__dirname, 'assets', 'workbench.ico'),
     backgroundColor: '#04070C',
     autoHideMenuBar: true,
     webPreferences: {
@@ -201,6 +205,14 @@ ipcMain.handle('nexus:open-protocol', async (_event, url) => {
   return true;
 });
 
+ipcMain.handle('nexus:open-local-app', async (_event, appId) => {
+  const executable = localApps.findInstalledApp(appId);
+  if (!executable) return { status: 'missing' };
+  const error = await shell.openPath(executable);
+  if (error) throw new Error('启动本机应用失败：' + error);
+  return { status: 'opened' };
+});
+
 ipcMain.handle('nexus:open-external', async (_event, url) => {
   const external = externalUrl(url);
   if (!external) throw new Error('网页地址无效');
@@ -214,10 +226,31 @@ ipcMain.handle('nexus:retry-load', (event) => {
   return Boolean(win);
 });
 
+function trustedAccountFrame(event) {
+  if (!event.senderFrame || event.senderFrame.url !== entryUrl) throw new Error('账号操作来源无效');
+}
+
+ipcMain.handle('nexus:account-server-info', (event) => { trustedAccountFrame(event); return accountClient.getServerUrl(); });
+ipcMain.handle('nexus:account-server-save', (event, url) => { trustedAccountFrame(event); return accountClient.setServerUrl(url); });
+ipcMain.handle('nexus:account-register', (event, username, password) => {
+  trustedAccountFrame(event); return accountClient.register(username, password);
+});
+ipcMain.handle('nexus:account-login', (event, username, password) => {
+  trustedAccountFrame(event); return accountClient.login(username, password);
+});
+ipcMain.handle('nexus:account-logout', (event) => { trustedAccountFrame(event); return accountClient.logout(); });
+ipcMain.handle('nexus:account-session', (event) => { trustedAccountFrame(event); return accountClient.session(); });
+ipcMain.handle('nexus:account-workspace', (event) => { trustedAccountFrame(event); return accountClient.getWorkspace(); });
+ipcMain.handle('nexus:account-save', (event, revision, data) => {
+  trustedAccountFrame(event); return accountClient.saveWorkspace(revision, data);
+});
+
 app.whenReady().then(() => {
   const allowed = {
     '/nexus-workbench.html': path.join(__dirname, '..', 'nexus-workbench.html'),
     '/desktop/ui.js': path.join(__dirname, 'ui.js')
+    ,'/auth/client.js': path.join(__dirname, '..', 'auth', 'client.js')
+    ,'/auth/sync.js': path.join(__dirname, '..', 'auth', 'sync.js')
   };
   protocol.handle('nexus', (request) => {
     const url = new URL(request.url);

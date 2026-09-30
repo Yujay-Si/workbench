@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <title>NEXUS · 工作台</title>
 <!-- 本工作台通过 WorkBuddy 资料库能力（library skill）搭建、存储和部署 -->
-<!-- 本版本为本地验收版：数据存于浏览器 localStorage，后续部署时切换为资料库数据表 -->
+<!-- 账号和工作台数据由服务端保存；旧版 localStorage 仅供原始备份使用。 -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
@@ -79,6 +79,26 @@ body::before{
   background-size:52px 52px;
 }
 .layout{position:relative;z-index:1;display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh}
+body[data-account="off"] .layout{display:none}
+body[data-account="on"] #accountGate{display:none}
+.account-gate{position:relative;z-index:2;min-height:100vh;display:grid;place-items:center;padding:24px}
+.account-card{width:min(430px,100%);padding:28px;border:1px solid var(--line-2);border-radius:18px;background:var(--panel);box-shadow:0 24px 70px rgba(0,0,0,.3)}
+.account-card h1{font-size:24px;letter-spacing:.12em;color:var(--strong)}
+.account-card p{color:var(--text-2);font-size:13px;margin:4px 0 18px}
+.account-tabs{display:flex;gap:8px;margin-bottom:18px}
+.account-tabs button{flex:1;padding:9px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--text-2);font:inherit;cursor:pointer}
+.account-tabs button[aria-selected="true"]{border-color:var(--cyan);color:var(--strong);background:rgba(56,198,244,.14)}
+.account-form{display:grid;gap:12px}
+.account-form label{display:grid;gap:5px;color:var(--text-2);font-size:12px}
+.account-form input{width:100%;min-height:42px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--text);font:inherit}
+.account-form button[type="submit"]{min-height:44px;border:0;border-radius:9px;background:var(--cyan);color:#02121c;font-size:14px;font-weight:600;cursor:pointer}
+.account-rule{font-size:12px;color:var(--text-3);line-height:1.7;margin-top:14px}
+.account-status{min-height:20px;color:var(--amber);font-size:12px;line-height:1.6;margin-top:12px}
+.account-server{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.account-server button{margin-top:8px;padding:7px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer}
+.account-user{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text-2)}
+.account-user span{overflow-wrap:anywhere}
+.account-user button{border:1px solid var(--line);border-radius:7px;background:var(--surface);padding:4px 8px;color:var(--text-2);cursor:pointer}
 .main{display:flex;flex-direction:column;min-width:0}
 .content{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:16px 20px 40px}
 .ic{width:18px;height:18px;display:block;flex:none}
@@ -586,7 +606,30 @@ body[data-auth="off"] #pwdPanel{display:none!important}
 }
 </style>
 </head>
-<body data-auth="off">
+<body data-auth="off" data-account="off">
+
+<div class="account-gate" id="accountGate">
+  <div class="account-card">
+    <h1>NEXUS</h1>
+    <p>登录后使用自己的工作台数据，并在电脑之间同步。</p>
+    <div class="account-tabs">
+      <button type="button" id="accountLoginTab" aria-selected="true">登录</button>
+      <button type="button" id="accountRegisterTab" aria-selected="false">注册</button>
+    </div>
+    <form class="account-form" id="accountForm">
+      <label>用户名<input id="accountName" autocomplete="username" maxlength="32" required /></label>
+      <label>密码<input id="accountPassword" type="password" autocomplete="current-password" maxlength="128" required /></label>
+      <label id="accountConfirmRow" class="hidden">确认密码<input id="accountConfirm" type="password" autocomplete="new-password" maxlength="128" /></label>
+      <button type="submit" id="accountSubmit">登录</button>
+    </form>
+    <div class="account-rule">用户名可使用文字或数字。密码至少 6 位，须包含大写字母、小写字母、数字、特殊符号中的至少三类。连续输错超过 3 次依次锁定 1 分钟、10 分钟、永久锁定；永久锁定后只能用事先导出的备份注册新账号恢复。</div>
+    <div class="account-status" id="accountStatus" role="status" aria-live="polite"></div>
+    <div class="account-server hidden" id="accountServerBox">
+      <label>同步服务器地址<input id="accountServerUrl" type="url" placeholder="https://你的服务器地址" /></label>
+      <button type="button" id="accountServerSave">保存服务器地址</button>
+    </div>
+  </div>
+</div>
 
 <div class="lock" id="lock">
   <div class="lock-card" id="lockCard">
@@ -636,11 +679,11 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     </div>
 
     <div class="side-group side-foot">
+      <div class="account-user"><span id="accountUser"></span><button type="button" id="btnAccountLogout">退出登录</button></div>
       <div class="side-title">数据</div>
       <div class="side-tools">
         <button class="tiny-btn" id="btnExport">导出备份</button>
         <button class="tiny-btn" id="btnImport">导入恢复</button>
-        <button class="tiny-btn" id="btnClearDemo">清空示例</button>
         <button class="tiny-btn" id="btnPwd">改密码</button>
         <button class="tiny-btn" id="btnTheme2">主题</button>
       </div>
@@ -854,7 +897,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     </div>
     <div class="notice">
       <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 11.2v5.3"/><circle cx="12" cy="7.9" r=".95" fill="currentColor" stroke="none"/></svg>
-      <div>浏览器无法安装或运行本机软件，也读不到 QQ / 微信里的聊天数据——这是浏览器的安全边界，任何网页都做不到。所以这里给每个应用两条路：<b style="color:#8FDDFA;font-weight:500">能网页化的直接打开</b>，数据在厂商云端，换台电脑登录同一账号就能接着用；<b style="color:#8FDDFA;font-weight:500">必须装客户端的</b>提供本机唤起和下载入口。</div>
+      <div>桌面版可检测并启动已安装的微信、QQ、WPS 云文档和 WorkBuddy；未安装时会在工作台内提示。浏览器预览受系统安全限制，不能检测本机软件。</div>
     </div>
     <div class="app-grid" id="appGrid"></div>
 
@@ -872,7 +915,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
           <option value="local">本机应用优先</option>
           <option value="download">需先装客户端</option>
         </select>
-        <input id="lfDesc" placeholder="一句话说明（可选），如 启动本机微信 · 未安装时打开官方下载页" maxlength="70" />
+        <input id="lfDesc" placeholder="一句话说明（可选），如 启动本机微信" maxlength="70" />
       </form>
       <div class="form-foot" style="margin-top:-4px">
         <button class="chip" type="button" data-act="reset-link-form">清空表单</button>
@@ -963,6 +1006,8 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   </div>
 </div>
 
+<script src="auth/client.js"></script>
+<script src="auth/sync.js"></script>
 <script>
 (function () {
   'use strict';
@@ -971,9 +1016,11 @@ body[data-auth="off"] #pwdPanel{display:none!important}
      0. 常量
      ======================================================== */
   var STORE_KEY = 'wb_nexus_v1';
+  var Account = window.nexusAccount;
+  var currentAccount = null;
+  var syncTimer = null;
   var AUTH_ENABLED = false;          // 功能完善前暂时关闭进入密码；重新启用时改为 true
   var SESSION_KEY = 'wb_nexus_unlocked';
-  var THEME_KEY = 'wb_nexus_theme';
   var THEME_ORDER = ['dark', 'light', 'auto'];   // 点击循环顺序
   var THEME_LABEL = { dark: '深色', light: '浅色', auto: '跟随系统' };
   var LIMIT_DAYS = 3;               // 「今天要处理」向后看的天数
@@ -991,32 +1038,37 @@ body[data-auth="off"] #pwdPanel{display:none!important}
 
   var PRESET_COLORS = ['#38C6F4', '#3DDC97', '#7DE3FF', '#FFB84D', '#A78BFA', '#F472B6', '#34D399', '#60A5FA', '#FBBF24', '#2DD4BF'];
 
-  /* 内置应用包
-     原则：能网页化的一律走网页版（数据在厂商云端，换设备登录同一账号即可继续用）；
-     必须启动本机客户端的用 kind='local' 优先唤起，失败后回退到官方页面。 */
+  /* 四个内置客户端由桌面主进程按固定名单检测和启动。 */
   var APP_PACK = [
     {
       name: '微信', group: '沟通协作', protocol: 'weixin://',
       url: 'https://pc.weixin.qq.com/', kind: 'local',
-      desc: '启动本机微信 · 未安装或无法唤起时打开官方下载页'
+      desc: '启动本机微信；未安装时显示提示'
     },
     {
       name: 'QQ', group: '沟通协作', protocol: 'tencent://',
-      url: 'https://mail.qq.com', kind: 'web',
-      desc: 'QQ 邮箱网页版 · 网页版 QQ 已下线，收发邮件走这里'
+      url: 'https://im.qq.com/', kind: 'local',
+      desc: '启动本机 QQ；未安装时显示提示'
     },
     {
       name: 'WPS 云文档', group: '办公文档', protocol: 'wps://',
-      url: 'https://www.kdocs.cn', kind: 'web',
-      desc: '在线编辑 Word / Excel / PPT，文件存云端，换电脑登录账号接着写'
+      url: 'https://www.kdocs.cn', kind: 'local',
+      desc: '启动本机 WPS 云文档或 WPS Office；未安装时显示提示'
     },
     {
       name: 'WorkBuddy', group: '办公文档', protocol: '',
-      url: 'https://www.workbuddy.cn/', kind: 'download',
-      desc: '桌面客户端，没有网页版 · 这个按钮会打开官方下载页'
+      url: 'https://www.workbuddy.cn/', kind: 'local',
+      desc: '启动本机 WorkBuddy；未安装时显示提示'
     }
   ];
-  var APP_PACK_VER = 3;
+  var APP_PACK_VER = 4;
+
+  var LOCAL_APP_IDS = { '微信': 'wechat', 'QQ': 'qq', 'WPS 云文档': 'wps', 'WorkBuddy': 'workbuddy' };
+  function localAppId(app) {
+    var name = String(app.name || '').trim();
+    return Object.prototype.hasOwnProperty.call(LOCAL_APP_IDS, name) ? LOCAL_APP_IDS[name] : '';
+  }
+  function isNotionApp(app) { return String(app.name || '').trim().toLowerCase() === 'notion'; }
 
   /* 备忘录：可选的卡片标记色（深空黑主题下的高饱和色，用于左侧色条做肉眼区分） */
   var MEMO_COLORS = ['#38C6F4', '#3DDC97', '#7DE3FF', '#FFB84D', '#A78BFA', '#F472B6'];
@@ -1029,41 +1081,27 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     { key: 'domestic', label: '国内', type: 'guonei' },
     { key: 'ai', label: 'AI', type: 'keji' }
   ];
-  var NEWS_KEY_STORE = 'wb_nexus_news_key';
   var NEWS_API = 'https://v.juhe.cn/toutiao/index';
   /* ========================================================
-     1. 数据层：读写 storage（后续部署可替换为资料库数据表）
+     1. 数据层：账号数据只通过已认证的服务端接口读写。
      ======================================================== */
-  var storageReadError = false;
   var Store = {
+    sync: null,
     load: function () {
-      try {
-        var raw = localStorage.getItem(STORE_KEY);
-        if (!raw) return null;
-        var loaded = JSON.parse(raw);
-        if (!loaded || !Array.isArray(loaded.tasks) ||
-            (loaded.recurring != null && !Array.isArray(loaded.recurring)) ||
-            (loaded.links != null && !Array.isArray(loaded.links)) ||
-            (loaded.memos != null && !Array.isArray(loaded.memos))) {
-          throw new Error('工作台数据结构错误');
-        }
-        return loaded;
-      } catch (e) { storageReadError = true; return null; }
+      return this.sync ? this.sync.open() : Promise.reject(new Error('请先登录'));
     },
     save: function (data) {
-      try {
-        if (storageReadError) throw new Error('原始数据读取失败，禁止自动覆盖');
-        // API Key 仅在当前会话使用，不写入工作台主数据或导出备份。
-        var snapshot = Object.assign({}, data, {
-          news: { fetchedAt: data.news.fetchedAt, cached: data.news.cached }
-        });
-        localStorage.setItem(STORE_KEY, JSON.stringify(snapshot));
-        setSync('saved');
-        return true;
-      } catch (e) {
-        setSync('offline');
-        return false;
-      }
+      if (!this.sync) return Promise.resolve(false);
+      return this.sync.save({
+        tasks: data.tasks, recurring: data.recurring, links: data.links, memos: data.memos,
+        news: { fetchedAt: data.news.fetchedAt, cached: data.news.cached },
+        settings: {
+          lastRollover: data.settings.lastRollover,
+          appPack: data.settings.appPack,
+          memoSeed: data.settings.memoSeed,
+          theme: data.settings.theme
+        }
+      });
     }
   };
 
@@ -1076,7 +1114,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     links: [],
     memos: [],
     news: { key: '', fetchedAt: '', cached: { international: [], domestic: [], ai: [] } },
-    settings: { password: '0000', lastRollover: '', seeded: true, theme: 'dark' },
+    settings: { lastRollover: '', seeded: true, theme: 'dark' },
     ui: {
       tab: 'home',
       newsTab: 'international',
@@ -1290,14 +1328,14 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   function seedData() {
     var t = todayStr();
     return {
-      settings: { password: '0000', lastRollover: t, seeded: true, appPack: APP_PACK_VER, memoSeed: MEMO_SEED_VER },
+      settings: { lastRollover: t, seeded: true, appPack: APP_PACK_VER, memoSeed: MEMO_SEED_VER },
       tasks: [],
       recurring: [],
       links: APP_PACK.map(function (a) {
         return {
           id: uid(), name: a.name, url: a.url, protocol: a.protocol || '',
           desc: a.desc || '', kind: a.kind || 'web', group: a.group,
-          type: a.protocol ? 'app' : 'web'
+          type: a.kind === 'local' || a.protocol ? 'app' : 'web'
         };
       }),
       memos: []
@@ -1316,9 +1354,18 @@ body[data-auth="off"] #pwdPanel{display:none!important}
         if (!isDefaultWechat) return;
         l.url = 'https://pc.weixin.qq.com/';
         l.kind = 'local';
-        l.desc = '启动本机微信 · 未安装或无法唤起时打开官方下载页';
+        l.desc = '启动本机微信；未安装时显示提示';
         l.type = 'app';
         n++;
+      });
+    }
+    if (ver < 4) {
+      state.links.forEach(function (l) {
+        var builtin = APP_PACK.find(function (a) { return a.name === l.name; });
+        if (!builtin) return;
+        l.kind = 'local';
+        l.desc = builtin.desc;
+        l.type = 'app';
       });
     }
     APP_PACK.forEach(function (a) {
@@ -1328,7 +1375,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       state.links.push({
         id: uid(), name: a.name, url: a.url, protocol: a.protocol || '',
         desc: a.desc || '', kind: a.kind || 'web', group: a.group,
-        type: a.protocol ? 'app' : 'web'
+        type: a.kind === 'local' || a.protocol ? 'app' : 'web'
       });
       n++;
     });
@@ -1516,7 +1563,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     var txt = document.getElementById('syncText');
     if (!box || !txt) return;
     box.setAttribute('data-s', mode);
-    txt.textContent = mode === 'saving' ? '正在保存…' : (mode === 'offline' ? '保存失败' : '本地已保存');
+    txt.textContent = mode === 'saving' ? '正在同步…' : mode === 'conflict' ? '同步冲突，请导出备份' : mode === 'offline' ? '同步失败，请导出备份' : '云端已同步';
   }
 
   function renderQuickBar() {
@@ -1538,8 +1585,8 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       var items = g.items.map(function (l) {
         var ch = (l.name || '?').trim().charAt(0);
         var color = PRESET_COLORS[hashCode(l.name || '') % PRESET_COLORS.length];
-        var tag = (l.protocol && String(l.protocol).trim()) ? '<span class="qtype">本机</span>' : '';
-        var isLocal = l.kind === 'local' && String(l.protocol || '').trim();
+        var tag = localAppId(l) || (l.protocol && String(l.protocol).trim()) ? '<span class="qtype">本机</span>' : '';
+        var isLocal = !!localAppId(l) || (l.kind === 'local' && String(l.protocol || '').trim());
         if (isLocal) {
           return '<button type="button" class="qitem" data-act="app-launch" data-id="' + l.id + '" title="启动本机应用">' +
             '<span class="qlogo" style="background:' + color + '">' + esc(ch) + '</span>' +
@@ -1574,9 +1621,22 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     }
   }
 
-  /* 用隐藏 iframe 触发已注册的本机协议；未检测到焦点切换时回退到配置的官方页面。 */
+  /* 自定义应用仍沿用旧本机协议；四个内置应用由桌面主进程检测 EXE。 */
   function launchApp(app) {
     if (!app) return;
+    var builtInId = localAppId(app);
+    if (builtInId) {
+      if (!window.nexusDesktop || !window.nexusDesktop.openLocalApp) {
+        toast('请在 Windows 桌面版中启动「' + app.name + '」');
+        return;
+      }
+      window.nexusDesktop.openLocalApp(builtInId).then(function (result) {
+        if (result.status === 'missing') toast('这台电脑未安装「' + app.name + '」');
+      }).catch(function (error) {
+        toast('启动「' + app.name + '」失败：' + (error.message || error));
+      });
+      return;
+    }
     var proto = String(app.protocol || '').trim();
     if (!proto) { toast('「' + app.name + '」没有配置本机协议'); return; }
     if (window.nexusDesktop) {
@@ -1616,6 +1676,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   }
 
   function appTagHTML(a) {
+    if (localAppId(a)) return '<span class="app-tag ok">本机应用</span>';
     if (a.kind === 'local' && a.protocol && String(a.protocol).trim()) return '<span class="app-tag ok">本机应用</span>';
     if (a.kind === 'download') return '<span class="app-tag warn">需装客户端</span>';
     if (a.protocol && String(a.protocol).trim()) return '<span class="app-tag ok">可本机唤起</span>';
@@ -1626,8 +1687,8 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     var ch = (a.name || '?').trim().charAt(0);
     var color = PRESET_COLORS[hashCode(a.name || '') % PRESET_COLORS.length];
     var hasProto = !!(a.protocol && String(a.protocol).trim());
-    var isLocal = a.kind === 'local' && hasProto;
-    var mainLabel = a.kind === 'download' ? '去下载' : (isLocal ? ('启动' + a.name) : '网页版打开');
+    var isLocal = !!localAppId(a) || (a.kind === 'local' && hasProto);
+    var mainLabel = isLocal ? ('启动' + a.name) : (a.kind === 'download' ? '去下载' : '网页版打开');
     var mainAct = isLocal ? 'app-launch' : 'app-open';
     return '<article class="app-card" data-search-target="' + esc(a.id) + '">' +
       '<div class="app-top">' +
@@ -2191,11 +2252,6 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     if (v === null) return; // 用户取消
     v = (v || '').trim();
     state.news.key = v;
-    try {
-      if (v) sessionStorage.setItem(NEWS_KEY_STORE, v);
-      else sessionStorage.removeItem(NEWS_KEY_STORE);
-      localStorage.removeItem(NEWS_KEY_STORE);
-    } catch (e) { /* 忽略隐私模式限制 */ }
     renderNews();
     if (v) { toast('Key 已保存，点击「刷新」拉取新闻'); onNewsRefresh(); }
     else { toast('Key 已清除'); }
@@ -2367,9 +2423,11 @@ body[data-auth="off"] #pwdPanel{display:none!important}
 
   function commit() {
     setSync('saving');
-    var saved = Store.save(state);
+    var saved = Store.save(state).then(function (ok) {
+      if (!ok) toast('同步失败：请导出当前数据备份，再重试同步');
+      return ok;
+    });
     refreshAll();
-    if (!saved) toast('保存失败：本次修改可能丢失，请立即导出备份');
     return saved;
   }
 
@@ -2413,7 +2471,6 @@ body[data-auth="off"] #pwdPanel{display:none!important}
         root.removeAttribute('data-resolved');
       }
     }
-    try { localStorage.setItem(THEME_KEY, pref); } catch (e) { /* 忽略 */ }
   }
 
   function cycleTheme() {
@@ -2599,7 +2656,8 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   function exportJSON() {
     var payload = {
       app: 'NEXUS',
-      version: 1,
+      version: 2,
+      account: currentAccount ? currentAccount.username : '',
       exportedAt: new Date().toISOString(),
       tasks: state.tasks,
       recurring: state.recurring,
@@ -2607,7 +2665,6 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       memos: state.memos,
       news: { fetchedAt: state.news.fetchedAt || '', cached: state.news.cached || { international: [], domestic: [], ai: [] } },
       settings: {
-        password: state.settings.password,
         lastRollover: state.settings.lastRollover,
         appPack: state.settings.appPack || 0,
         memoSeed: state.settings.memoSeed || 0,
@@ -2619,7 +2676,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       var blob = new Blob([str], { type: 'application/json' });
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'NEXUS-backup-' + todayStr() + '.json';
+      a.download = 'NEXUS-backup-' + (currentAccount ? currentAccount.username + '-' : '') + todayStr() + '.json';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -2768,11 +2825,11 @@ body[data-auth="off"] #pwdPanel{display:none!important}
           demo: m.demo
         };
       });
-      if (data.settings && data.settings.password) state.settings.password = String(data.settings.password);
       if (data.settings && data.settings.lastRollover) state.settings.lastRollover = data.settings.lastRollover;
       if (data.settings && data.settings.appPack) state.settings.appPack = Number(data.settings.appPack) || 0;
       if (data.settings && data.settings.memoSeed) state.settings.memoSeed = Number(data.settings.memoSeed) || 0;
       if (data.settings && data.settings.theme) state.settings.theme = data.settings.theme;
+      removeLegacyExamples();
       migrateAppPack();
       migrateMemoSeed();
       applyTheme(state.settings.theme || 'dark');
@@ -2784,7 +2841,6 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       if (msBox) msBox.value = '';
       clearLinkForm();
       clearMemoForm();
-      storageReadError = false; // 用户已确认用有效备份覆盖原数据。
       commit();
       toast('已导入 ' + state.tasks.length + ' 条任务');
     };
@@ -2793,18 +2849,13 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     e.target.value = '';
   }
 
-  function clearDemoData() {
+  function removeLegacyExamples() {
     var demoRuleIds = {};
     state.recurring.forEach(function (r) { if (r.demo) demoRuleIds[r.id] = 1; });
-    var before = state.tasks.length;
     state.tasks = state.tasks.filter(function (x) { return !x.demo && !demoRuleIds[x.recurringId]; });
     state.recurring = state.recurring.filter(function (r) { return !r.demo; });
-    state.links = state.links.filter(function (l) { return !l.demo; });
+    state.links = state.links.filter(function (l) { return !l.demo && !isNotionApp(l); });
     state.memos = state.memos.filter(function (m) { return !m.demo; });
-    state.ui.editingTaskId = null;
-    clearMemoForm();
-    commit();
-    toast('已清空 ' + (before - state.tasks.length) + ' 条示例任务，可以开始录自己的了');
   }
 
   function savePwd() {
@@ -3091,7 +3142,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     if (act === 'app-open') {
       var oa = findLink(id);
       if (!oa) return;
-      if (oa.kind === 'local' && String(oa.protocol || '').trim()) { launchApp(oa); return; }
+      if (localAppId(oa) || (oa.kind === 'local' && String(oa.protocol || '').trim())) { launchApp(oa); return; }
       openUrl(oa.url);
       return;
     }
@@ -3345,14 +3396,6 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     var fileImport = document.getElementById('fileImport');
     if (fileImport) fileImport.addEventListener('change', onImportFile);
 
-    var btnClearDemo = document.getElementById('btnClearDemo');
-    if (btnClearDemo) {
-      btnClearDemo.addEventListener('click', function () {
-        if (!window.confirm('将删除旧版本中标记为示例的任务、周期规则、网址和备忘录（你录入的内容和内置应用包都会保留）。继续？')) return;
-        clearDemoData();
-      });
-    }
-
     var btnPwd = document.getElementById('btnPwd');
     if (btnPwd) {
       btnPwd.addEventListener('click', function () {
@@ -3386,93 +3429,157 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   /* ========================================================
      13. 初始化（唯一入口，顺序固定）
      ======================================================== */
-  function init() {
-    var loaded = Store.load();
-
-    if (loaded && loaded.tasks) {
-      state.tasks = loaded.tasks || [];
-      state.recurring = loaded.recurring || [];
-      state.links = loaded.links || [];
-      state.memos = loaded.memos || [];
-      if (loaded.news && typeof loaded.news === 'object') {
-        state.news.key = loaded.news.key || '';
-        state.news.fetchedAt = loaded.news.fetchedAt || '';
-        state.news.cached = loaded.news.cached || { international: [], domestic: [], ai: [] };
-      }
-      var s = loaded.settings || {};
-      state.settings = {
-        password: s.password || '0000',
-        lastRollover: s.lastRollover || '',
-        seeded: true,
-        appPack: s.appPack || 0,
-        memoSeed: s.memoSeed || 0,
-        theme: s.theme || 'dark'
-      };
-    } else {
-      var sd = seedData();
-      state.tasks = sd.tasks;
-      state.recurring = sd.recurring;
-      state.links = sd.links;
-      state.memos = sd.memos;
-      state.settings = sd.settings;
-      state.tasks.forEach(function (x) { x.demo = true; });
-      state.recurring.forEach(function (x) { x.demo = true; });
-      /* 应用包属于「内置」内容，不算示例数据，点「清空示例」不会被删掉 */
-    }
-
+  function applyWorkspace(data) {
+    var loaded = data && data.tasks ? data : seedData();
+    var before = JSON.stringify(loaded);
+    state.tasks = loaded.tasks || [];
+    state.recurring = loaded.recurring || [];
+    state.links = loaded.links || [];
+    state.memos = loaded.memos || [];
+    state.news = {
+      key: '', fetchedAt: loaded.news && loaded.news.fetchedAt || '',
+      cached: loaded.news && loaded.news.cached || { international: [], domestic: [], ai: [] }
+    };
+    state.settings = Object.assign({ lastRollover: '', appPack: 0, memoSeed: 0, theme: 'dark' }, loaded.settings || {});
+    removeLegacyExamples();
     migrateAppPack();
     migrateMemoSeed();
-    rolloverOverdue();
     generateRecurring();
-
-    /* 旧版本的本地 Key 迁移到当前会话，并清除两处长期持久化副本。 */
-    try {
-      state.news.key = sessionStorage.getItem(NEWS_KEY_STORE) ||
-        localStorage.getItem(NEWS_KEY_STORE) || state.news.key || '';
-      if (state.news.key) sessionStorage.setItem(NEWS_KEY_STORE, state.news.key);
-      localStorage.removeItem(NEWS_KEY_STORE);
-    } catch (e) { /* 隐私模式下仍可在本页使用 Key */ }
-    var demoRuleIds = {};
-    state.recurring.forEach(function (r) { if (r.demo) demoRuleIds[r.id] = 1; });
-    state.tasks.forEach(function (x) {
-      if (x.recurringId && demoRuleIds[x.recurringId]) x.demo = true;
+    applyTheme(state.settings.theme);
+    refreshAll();
+    return before !== JSON.stringify({
+      tasks: state.tasks, recurring: state.recurring, links: state.links,
+      memos: state.memos, news: loaded.news, settings: state.settings
     });
+  }
 
-    /* 主题：优先读独立 key（比 settings 更早，且单独持久化），否则读 settings，再否则默认深色 */
-    var savedTheme = null;
-    try { savedTheme = localStorage.getItem(THEME_KEY); } catch (e) { savedTheme = null; }
-    if (!savedTheme && state.settings.theme) savedTheme = state.settings.theme;
-    applyTheme(savedTheme || 'dark');
-    /* 跟随系统：系统偏好变化时实时刷新（仅在 auto 档生效） */
+  function accountStatus(message) {
+    document.getElementById('accountStatus').textContent = message || '';
+  }
+
+  function showAccount() {
+    document.body.setAttribute('data-account', 'off');
+    document.getElementById('accountUser').textContent = '';
+    document.getElementById('accountPassword').value = '';
+    document.getElementById('accountConfirm').value = '';
+  }
+
+  async function enterAccount(account) {
+    currentAccount = account;
+    Store.sync = window.createNexusSync(Account, function (remote) {
+      if (applyWorkspace(remote)) commit();
+      toast('已从云端同步更新');
+    }, function (mode, message) {
+      setSync(mode);
+      if (mode === 'conflict') toast(message + '；请先导出当前备份');
+    });
+    try {
+      var loaded = await Store.load();
+      var changed = applyWorkspace(loaded);
+      if (!loaded || changed) {
+        if (!await Store.save(state)) throw new Error('首次同步失败，请检查服务器连接');
+      }
+      document.getElementById('accountUser').textContent = account.username;
+      accountStatus('');
+      document.body.setAttribute('data-account', 'on');
+      setSync('saved');
+      if (syncTimer) clearInterval(syncTimer);
+      syncTimer = setInterval(function () {
+        if (!Store.sync) return;
+        if (Store.sync.hasUnsaved()) Store.sync.retry();
+        else Store.sync.poll();
+      }, 12000);
+    } catch (error) {
+      Store.sync = null;
+      currentAccount = null;
+      showAccount();
+      accountStatus(error.message || '读取账号数据失败');
+    }
+  }
+
+  async function logoutAccount() {
+    if (Store.sync && Store.sync.hasUnsaved()) {
+      var saved = await Store.sync.retry();
+      if (!saved) { toast('同步失败，请先导出备份再退出'); return; }
+    }
+    if (syncTimer) clearInterval(syncTimer);
+    syncTimer = null;
+    var result = await Account.logout();
+    if (!result.ok) { toast(result.error || '退出失败'); return; }
+    Store.sync = null;
+    currentAccount = null;
+    state.tasks = []; state.recurring = []; state.links = []; state.memos = [];
+    state.news = { key: '', fetchedAt: '', cached: { international: [], domestic: [], ai: [] } };
+    showAccount();
+    accountStatus('已退出登录');
+  }
+
+  function bindAccount() {
+    var mode = 'login';
+    function select(next) {
+      mode = next;
+      document.getElementById('accountLoginTab').setAttribute('aria-selected', String(mode === 'login'));
+      document.getElementById('accountRegisterTab').setAttribute('aria-selected', String(mode === 'register'));
+      document.getElementById('accountConfirmRow').classList.toggle('hidden', mode !== 'register');
+      document.getElementById('accountConfirm').required = mode === 'register';
+      document.getElementById('accountPassword').setAttribute('autocomplete', mode === 'register' ? 'new-password' : 'current-password');
+      document.getElementById('accountSubmit').textContent = mode === 'register' ? '注册并进入' : '登录';
+      accountStatus('');
+    }
+    document.getElementById('accountLoginTab').addEventListener('click', function () { select('login'); });
+    document.getElementById('accountRegisterTab').addEventListener('click', function () { select('register'); });
+    document.getElementById('accountForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+      var username = document.getElementById('accountName').value.trim();
+      var password = document.getElementById('accountPassword').value;
+      if (mode === 'register' && password !== document.getElementById('accountConfirm').value) {
+        accountStatus('两次输入的密码不一致'); return;
+      }
+      var button = document.getElementById('accountSubmit');
+      button.disabled = true;
+      accountStatus(mode === 'register' ? '正在注册…' : '正在登录…');
+      try {
+        var result = await (mode === 'register' ? Account.register(username, password) : Account.login(username, password));
+        if (!result.ok) {
+          var retry = result.retryAfterSeconds ? '，请 ' + result.retryAfterSeconds + ' 秒后再试' : '';
+          accountStatus((result.error || '操作失败') + retry);
+          return;
+        }
+        await enterAccount(result.account);
+      } catch (error) { accountStatus(error.message || '连接失败'); }
+      finally { button.disabled = false; }
+    });
+    document.getElementById('btnAccountLogout').addEventListener('click', logoutAccount);
+    if (window.nexusDesktop) {
+      var box = document.getElementById('accountServerBox');
+      box.classList.remove('hidden');
+      Account.serverInfo().then(function (info) { document.getElementById('accountServerUrl').value = info.url || ''; });
+      document.getElementById('accountServerSave').addEventListener('click', async function () {
+        try {
+          var result = await Account.saveServer(document.getElementById('accountServerUrl').value);
+          accountStatus(result.ok ? '服务器地址已保存，请重新登录' : result.error || '保存失败');
+        } catch (error) { accountStatus(error.message || '保存失败'); }
+      });
+    }
+  }
+
+  async function init() {
+    document.body.setAttribute('data-auth', 'off');
+    bindEvents();
+    bindAccount();
+    showAccount();
+    var dueEl = document.getElementById('tfDue');
+    if (dueEl && !dueEl.value) dueEl.value = todayStr();
     if (window.matchMedia) {
       try {
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
           if (state.settings.theme === 'auto') applyTheme('auto');
         });
-      } catch (e) { /* 旧浏览器不支持 addEventListener on media query，忽略 */ }
+      } catch (e) { /* 旧浏览器不支持该事件 */ }
     }
-
-    document.body.setAttribute('data-auth', AUTH_ENABLED ? 'on' : 'off');
-    if (AUTH_ENABLED) buildKeypad();
-    bindEvents();
-    refreshAll();
-
-    var dueEl = document.getElementById('tfDue');
-    if (dueEl && !dueEl.value) dueEl.value = todayStr();
-
-    var unlocked = false;
-    try { unlocked = sessionStorage.getItem(SESSION_KEY) === '1'; } catch (e) { unlocked = false; }
-    if (!AUTH_ENABLED) {
-      hideLock();
-    } else if (unlocked) {
-      hideLock();
-    } else {
-      showLock();
-    }
-
-    if (!Store.save(state)) toast(storageReadError
-      ? '本地数据读取失败，原数据未覆盖；请用有效备份恢复'
-      : '本地保存失败，请导出备份并检查浏览器存储空间');
+    var result = await Account.session();
+    if (result.ok && result.account) await enterAccount(result.account);
+    else accountStatus(result.code === 'NETWORK' ? result.error : '请登录或注册账号');
   }
 
   if (document.readyState === 'loading') {

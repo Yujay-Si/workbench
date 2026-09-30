@@ -1,11 +1,12 @@
 {
   "name": "nexus-workbench-desktop",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "NEXUS 个人工作台 Windows 桌面版",
   "main": "desktop/main.cjs",
   "scripts": {
     "start": "electron .",
+    "preview:accounts": "node server/index.cjs",
     "test": "node --test tests/*.test.cjs",
     "dist:win": "electron-builder --win nsis --win portable --x64 --publish never",
     "release:prepare": "node scripts/prepare-release.cjs"
@@ -23,6 +24,7 @@
     "files": [
       "nexus-workbench.html",
       "desktop/**/*",
+      "auth/**/*",
       "package.json"
     ],
     "publish": {
@@ -32,6 +34,7 @@
       "releaseType": "release"
     },
     "win": {
+      "icon": "desktop/assets/workbench.ico",
       "target": [
         {
           "target": "nsis",
