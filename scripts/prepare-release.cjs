@@ -13,7 +13,8 @@ const portablePath = path.join(dist, portableName);
 const setupPath = path.join(dist, setupName);
 const updateInfoPath = path.join(dist, 'latest.yml');
 
-if (process.env.GITHUB_REF_NAME && process.env.GITHUB_REF_NAME !== `v${version}`) {
+// workflow_dispatch builds from a branch before the tag is created; enforce equality only for version tags.
+if (process.env.GITHUB_REF_NAME?.startsWith('v') && process.env.GITHUB_REF_NAME !== `v${version}`) {
   throw new Error(`Git 标签 ${process.env.GITHUB_REF_NAME} 与 package.json 版本 ${version} 不一致`);
 }
 for (const file of [portablePath, setupPath, updateInfoPath]) {

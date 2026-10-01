@@ -3,6 +3,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 // 只向页面提供版本更新所需的四个操作；页面不能访问 Node 或文件系统。
 contextBridge.exposeInMainWorld('nexusDesktop', Object.freeze({
   info: () => ipcRenderer.invoke('nexus:update-info'),
+  languageGet: () => ipcRenderer.invoke('nexus:language-get'),
+  languageSet: (language) => ipcRenderer.invoke('nexus:language-set', language),
   saveFeed: (url) => ipcRenderer.invoke('nexus:update-save-feed', url),
   check: () => ipcRenderer.invoke('nexus:update-check'),
   install: () => ipcRenderer.invoke('nexus:update-install'),
@@ -23,5 +25,6 @@ contextBridge.exposeInMainWorld('nexusDesktop', Object.freeze({
   accountSession: () => ipcRenderer.invoke('nexus:account-session'),
   accountWorkspace: () => ipcRenderer.invoke('nexus:account-workspace'),
   accountSave: (revision, data) => ipcRenderer.invoke('nexus:account-save', revision, data),
+  accountBackupStatus: () => ipcRenderer.invoke('nexus:account-backup-status'),
   retryLoad: () => ipcRenderer.invoke('nexus:retry-load')
 }));

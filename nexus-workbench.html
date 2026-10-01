@@ -83,8 +83,7 @@ body[data-account="off"] .layout{display:none}
 body[data-account="on"] #accountGate{display:none}
 .account-gate{position:relative;z-index:2;min-height:100vh;display:grid;place-items:center;padding:24px}
 .account-card{width:min(430px,100%);padding:28px;border:1px solid var(--line-2);border-radius:18px;background:var(--panel);box-shadow:0 24px 70px rgba(0,0,0,.3)}
-.account-card h1{font-size:24px;letter-spacing:.12em;color:var(--strong)}
-.account-card p{color:var(--text-2);font-size:13px;margin:4px 0 18px}
+.account-card h1{font-size:24px;letter-spacing:.12em;color:var(--strong);text-align:center;margin-bottom:18px}
 .account-tabs{display:flex;gap:8px;margin-bottom:18px}
 .account-tabs button{flex:1;padding:9px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--text-2);font:inherit;cursor:pointer}
 .account-tabs button[aria-selected="true"]{border-color:var(--cyan);color:var(--strong);background:rgba(56,198,244,.14)}
@@ -92,13 +91,26 @@ body[data-account="on"] #accountGate{display:none}
 .account-form label{display:grid;gap:5px;color:var(--text-2);font-size:12px}
 .account-form input{width:100%;min-height:42px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--text);font:inherit}
 .account-form button[type="submit"]{min-height:44px;border:0;border-radius:9px;background:var(--cyan);color:#02121c;font-size:14px;font-weight:600;cursor:pointer}
-.account-rule{font-size:12px;color:var(--text-3);line-height:1.7;margin-top:14px}
+.account-rule{font-size:12px;color:var(--text-2);line-height:1.7;margin-top:14px}
+.account-rule strong,.account-rule span{display:block}
+.account-rule strong{color:var(--strong);font-size:13px;margin-bottom:4px}
 .account-status{min-height:20px;color:var(--amber);font-size:12px;line-height:1.6;margin-top:12px}
 .account-server{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .account-server button{margin-top:8px;padding:7px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer}
+.server-current,.backup-status{font-size:11px;line-height:1.5;color:var(--text-3);overflow-wrap:anywhere}
+.server-current span{color:var(--text-2)}
+.account-card .server-current{margin-top:12px;text-align:center}
+.recovery-help{font-size:11px;line-height:1.6;color:var(--text-3)}
+.recovery-help summary{cursor:pointer;color:var(--cyan-2)}
+.recovery-help p{margin:7px 0 0}
+.account-card .recovery-help{margin-top:10px}
 .account-user{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text-2)}
 .account-user span{overflow-wrap:anywhere}
 .account-user button{border:1px solid var(--line);border-radius:7px;background:var(--surface);padding:4px 8px;color:var(--text-2);cursor:pointer}
+.language-switch{display:flex;gap:5px;align-items:center}
+.account-card .language-switch{justify-content:center;margin-top:16px}
+.language-switch button{border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--text-2);padding:4px 10px;font:inherit;cursor:pointer}
+.language-switch button[aria-pressed="true"]{border-color:var(--cyan);color:var(--strong);background:rgba(56,198,244,.14)}
 .main{display:flex;flex-direction:column;min-width:0}
 .content{flex:1;width:100%;max-width:1180px;margin:0 auto;padding:16px 20px 40px}
 .ic{width:18px;height:18px;display:block;flex:none}
@@ -125,10 +137,17 @@ header{
 .brand h1{font-size:17px;font-weight:500;letter-spacing:.14em;color:var(--strong)}
 .brand small{display:block;font-size:11px;font-weight:400;letter-spacing:.06em;color:var(--text-3);line-height:1.2}
 .head-right{margin-left:auto;display:flex;align-items:center;gap:10px}
-.sync{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);white-space:nowrap}
+.sync{display:flex;align-items:center;gap:6px;padding:4px 6px;border:0;border-radius:7px;background:transparent;font:inherit;font-size:12px;color:var(--text-2);white-space:nowrap;cursor:pointer}
+.sync:hover,.sync[aria-expanded="true"]{background:var(--panel-2)}
 .sync i{width:7px;height:7px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);flex:none}
 .sync[data-s="saving"] i{background:var(--amber);box-shadow:0 0 8px var(--amber)}
-.sync[data-s="offline"] i{background:var(--red);box-shadow:0 0 8px var(--red)}
+.sync[data-s="offline"] i,.sync[data-s="conflict"] i{background:var(--red);box-shadow:0 0 8px var(--red)}
+.sync-panel{position:absolute;right:18px;top:58px;width:min(390px,calc(100vw - 28px));padding:16px;border:1px solid var(--line-2);border-radius:12px;background:var(--panel);box-shadow:0 18px 44px rgba(0,0,0,.3);font-size:12px;line-height:1.6;color:var(--text-2);white-space:normal}
+.sync-panel strong{display:block;color:var(--strong);font-size:14px}
+.sync-panel p{margin:7px 0 12px;overflow-wrap:anywhere}
+.sync-panel-actions{display:flex;gap:7px;flex-wrap:wrap}
+.sync-panel-actions button{border:1px solid var(--line-2);border-radius:7px;background:var(--surface);color:var(--text);padding:6px 9px;font:inherit;cursor:pointer}
+.sync-panel-actions button:disabled{opacity:.5;cursor:not-allowed}
 .icon-btn{
   width:38px;height:38px;min-width:38px;border-radius:10px;border:1px solid var(--line);
   background:var(--panel-2);color:var(--text-2);display:flex;align-items:center;justify-content:center;cursor:pointer;
@@ -345,6 +364,7 @@ select{appearance:none;-webkit-appearance:none;cursor:pointer}
 .memo-ta{width:100%;min-height:106px;resize:vertical;grid-column:1/-1;font-family:inherit;line-height:1.65}
 
 /* ---------- 首页（总览）---------- */
+.home-welcome{margin:2px 0 18px;text-align:center;color:var(--strong);font-size:clamp(28px,3vw,38px);font-weight:600;line-height:1.3;overflow-wrap:anywhere}
 .home-hello{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px;margin-bottom:14px}
 .home-hello h2{font-size:19px;font-weight:500;margin:0;letter-spacing:.5px}
 .home-hello .hd{font-size:12px;color:var(--text-3)}
@@ -377,25 +397,6 @@ select{appearance:none;-webkit-appearance:none;cursor:pointer}
 .home-stats .panel{margin:0}
 .home-stats .panel:first-child{grid-column:1/-1}
 
-/* ---------- 新闻速览 ---------- */
-.news-tabs{display:flex;gap:6px;margin-top:12px}
-.news-tabs .ntab{
-  border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--text-3);
-  font:inherit;font-size:13px;padding:7px 16px;cursor:pointer;transition:.16s;min-height:36px;
-}
-.news-tabs .ntab.on{color:var(--cyan-2);border-color:rgba(76,201,240,.5);background:rgba(56,198,244,.14)}
-.news-list{display:flex;flex-direction:column}
-.news-item{
-  display:flex;gap:12px;align-items:flex-start;padding:11px 14px;border-bottom:1px solid var(--line);
-  text-decoration:none;color:inherit;transition:.16s;
-}
-.news-item:last-child{border-bottom:none}
-.news-item:hover{background:rgba(56,198,244,.05)}
-.news-item .n-dot{flex:none;width:6px;height:6px;border-radius:50%;background:var(--cyan-2);margin-top:7px}
-.news-item .n-body{flex:1;min-width:0}
-.news-item .n-title{font-size:13.5px;color:var(--text);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.news-item .n-meta{font-size:11.5px;color:var(--text-3);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap}
-.news-empty{font-size:13px;color:var(--text-3);padding:18px 14px;text-align:center}
 .hlist{display:flex;flex-direction:column;gap:7px}
 .hrow{
   display:flex;align-items:center;gap:9px;padding:9px 11px;border:1px solid var(--line);border-radius:11px;
@@ -611,7 +612,6 @@ body[data-auth="off"] #pwdPanel{display:none!important}
 <div class="account-gate" id="accountGate">
   <div class="account-card">
     <h1>NEXUS</h1>
-    <p>登录后使用自己的工作台数据，并在电脑之间同步。</p>
     <div class="account-tabs">
       <button type="button" id="accountLoginTab" aria-selected="true">登录</button>
       <button type="button" id="accountRegisterTab" aria-selected="false">注册</button>
@@ -622,12 +622,24 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       <label id="accountConfirmRow" class="hidden">确认密码<input id="accountConfirm" type="password" autocomplete="new-password" maxlength="128" /></label>
       <button type="submit" id="accountSubmit">登录</button>
     </form>
-    <div class="account-rule">用户名可使用文字或数字。密码至少 6 位，须包含大写字母、小写字母、数字、特殊符号中的至少三类。连续输错超过 3 次依次锁定 1 分钟、10 分钟、永久锁定；永久锁定后只能用事先导出的备份注册新账号恢复。</div>
+    <div class="account-rule hidden" id="accountRule">
+      <strong>注册须知</strong>
+      <span>用户名：1–12 位文字或数字。</span>
+      <span>密码：至少 6 位、不能包含空格，须包含大写字母、小写字母、数字、特殊符号中的至少三类。</span>
+      <span>请定期导出备份。连续输错密码会逐级锁定账号；永久锁定后，只能使用事先导出的备份恢复数据。</span>
+    </div>
     <div class="account-status" id="accountStatus" role="status" aria-live="polite"></div>
     <div class="account-server hidden" id="accountServerBox">
       <label>同步服务器地址<input id="accountServerUrl" type="url" placeholder="https://你的服务器地址" /></label>
       <button type="button" id="accountServerSave">保存服务器地址</button>
     </div>
+    <div class="server-current">当前服务器：<span id="loginServer">读取中…</span></div>
+    <details class="recovery-help">
+      <summary>数据恢复说明</summary>
+      <p>有 JSON 备份：注册新用户名，登录后选择「导入恢复」。永久锁定的原账号无法再次登录。</p>
+      <p>只有自动快照：联系服务器管理员，从数据库快照提取账号数据后导入。自动快照保留最近 14 份，建议另存异地备份。</p>
+    </details>
+    <div class="language-switch" role="group" aria-label="语言"><button type="button" data-language="zh-CN">中文</button><button type="button" data-language="en-US">English</button></div>
   </div>
 </div>
 
@@ -680,6 +692,8 @@ body[data-auth="off"] #pwdPanel{display:none!important}
 
     <div class="side-group side-foot">
       <div class="account-user"><span id="accountUser"></span><button type="button" id="btnAccountLogout">退出登录</button></div>
+      <div class="language-switch" role="group" aria-label="语言"><button type="button" data-language="zh-CN">中文</button><button type="button" data-language="en-US">English</button></div>
+      <div class="server-current">当前服务器：<span id="activeServer">读取中…</span></div>
       <div class="side-title">数据</div>
       <div class="side-tools">
         <button class="tiny-btn" id="btnExport">导出备份</button>
@@ -687,6 +701,12 @@ body[data-auth="off"] #pwdPanel{display:none!important}
         <button class="tiny-btn" id="btnPwd">改密码</button>
         <button class="tiny-btn" id="btnTheme2">主题</button>
       </div>
+      <div class="backup-status" id="backupStatus" role="status">自动备份：查询中…</div>
+      <details class="recovery-help">
+        <summary>数据恢复说明</summary>
+        <p>有 JSON 备份：注册新用户名，登录后选择「导入恢复」。永久锁定的原账号无法再次登录。</p>
+        <p>只有自动快照：联系服务器管理员，从数据库快照提取账号数据后导入。自动快照保留最近 14 份，建议另存异地备份。</p>
+      </details>
       <div id="desktopUpdate" class="hidden update-panel">
         <button class="tiny-btn" type="button" id="btnUpdatePanel">版本与更新</button>
         <div id="updateDetails" class="hidden update-panel">
@@ -721,7 +741,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
         </button>
         <div class="topbar-title" id="topTitle">任务看板</div>
         <div class="head-right">
-          <div class="sync" id="syncBox" data-s="saved"><i></i><span id="syncText">本地已保存</span></div>
+          <button class="sync" id="syncBox" type="button" data-s="saved" aria-expanded="false" aria-controls="syncPanel"><i></i><span id="syncText">本地已保存</span></button>
           <button class="icon-btn" id="btnSearch" type="button" aria-label="全局搜索" title="全局搜索（Ctrl+K）">
             <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="10.8" cy="10.8" r="6.6"/><path d="m16 16 4.5 4.5"/></svg>
           </button>
@@ -733,6 +753,15 @@ body[data-auth="off"] #pwdPanel{display:none!important}
           <button class="icon-btn" id="btnRelock" title="锁定">
             <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="10.5" width="16" height="10.5" rx="2.5"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>
           </button>
+        </div>
+      </div>
+      <div class="sync-panel hidden" id="syncPanel" role="region" aria-label="同步详情">
+        <strong id="syncHeadline">同步详情</strong>
+        <p id="syncDetail"></p>
+        <div class="sync-panel-actions">
+          <button type="button" id="btnSyncRetry">重试同步</button>
+          <button type="button" id="btnSyncExport">导出当前数据</button>
+          <button type="button" id="btnSyncReload">读取服务器版本</button>
         </div>
       </div>
     </header>
@@ -747,6 +776,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       <input type="file" id="fileImport" accept=".json,application/json" class="hidden" />
 
       <section class="pane panel on" id="pane-home" style="padding:16px">
+        <h2 class="home-welcome" id="homeWelcome"></h2>
         <div class="home-hello">
           <h2 id="homeGreeting">晚上好</h2>
           <span class="hd" id="homeDate"></span>
@@ -805,18 +835,6 @@ body[data-auth="off"] #pwdPanel{display:none!important}
           </div>
         </div>
 
-        <div class="sec-head" style="margin-top:18px">
-          <h2>新闻速览</h2>
-          <div class="sp" style="display:flex;align-items:center;gap:8px">
-            <span class="news-src" id="newsSrc" style="font-size:12px;color:var(--text-3)"></span>
-            <button class="mini ghost" id="btnNewsKey" data-act="news-key">设置 Key</button>
-            <button class="mini" id="btnNewsRefresh" data-act="news-refresh">刷新</button>
-          </div>
-        </div>
-        <div class="news-tabs" id="newsTabs"></div>
-        <div class="panel" style="background:var(--surface-2);margin-top:12px">
-          <div class="news-list" id="newsList"></div>
-        </div>
       </section>
 
   <section class="pane panel on" id="pane-tasks" style="padding:16px">
@@ -1006,6 +1024,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   </div>
 </div>
 
+<script src="i18n/messages.js"></script>
 <script src="auth/client.js"></script>
 <script src="auth/sync.js"></script>
 <script>
@@ -1017,8 +1036,93 @@ body[data-auth="off"] #pwdPanel{display:none!important}
      ======================================================== */
   var STORE_KEY = 'wb_nexus_v1';
   var Account = window.nexusAccount;
+  var I18N = window.nexusI18n;
+  var language = (function () { try { return I18N.normalize(localStorage.getItem('nexus_language')); } catch (e) { return 'zh-CN'; } })();
+  var textOrigins = new WeakMap();
+  var attrOrigins = new WeakMap();
+  var tr = function (source, params) {
+    var value = String(source);
+    if (language === 'en-US' && !I18N.has(value)) {
+      var network = value.match(/^(连接工作台服务失败：|连接服务器失败：)(.*)$/);
+      if (network) return I18N.t(network[1] + '{error}', language, { error: network[2] });
+    }
+    return I18N.t(value, language, params);
+  };
+  function translateTextNode(node) {
+    if (!node.parentElement || /^(SCRIPT|STYLE|TEXTAREA)$/i.test(node.parentElement.tagName) ||
+        node.parentElement.closest('[data-user-content],.card-title,.memo-body,.n-title')) return;
+    var current = node.nodeValue;
+    var record = textOrigins.get(node);
+    if (!record || current !== record.rendered) record = { source: current, rendered: current };
+    var source = record.source;
+    var match = source.match(/^(\s*)([\s\S]*?)(\s*)$/);
+    var core = match && match[2];
+    var rendered = core && I18N.has(core) ? match[1] + tr(core) + match[3] : source;
+    record.rendered = rendered;
+    textOrigins.set(node, record);
+    if (current !== rendered) node.nodeValue = rendered;
+  }
+  function translateElement(element) {
+    if (element.nodeType !== 1) return;
+    var attrs = attrOrigins.get(element) || {};
+    ['placeholder', 'aria-label', 'title'].forEach(function (name) {
+      if (!element.hasAttribute(name)) return;
+      var current = element.getAttribute(name);
+      var record = attrs[name];
+      if (!record || current !== record.rendered) record = { source: current, rendered: current };
+      var rendered = I18N.has(record.source) ? tr(record.source) : record.source;
+      record.rendered = rendered;
+      attrs[name] = record;
+      if (current !== rendered) element.setAttribute(name, rendered);
+    });
+    attrOrigins.set(element, attrs);
+    Array.from(element.childNodes).forEach(function (child) {
+      if (child.nodeType === 3) translateTextNode(child);
+      else if (child.nodeType === 1) translateElement(child);
+    });
+  }
+  function applyLanguage(next) {
+    language = I18N.normalize(next);
+    document.documentElement.lang = language;
+    try { localStorage.setItem('nexus_language', language); } catch (e) { /* 私密模式可能禁用存储 */ }
+    if (window.nexusDesktop && window.nexusDesktop.languageSet) window.nexusDesktop.languageSet(language).catch(function () {});
+    document.querySelectorAll('[data-language]').forEach(function (button) {
+      button.setAttribute('aria-pressed', String(button.getAttribute('data-language') === language));
+    });
+    translateElement(document.body);
+    document.title = tr('NEXUS · 工作台');
+    if (currentAccount) refreshAll();
+    setSync(syncMode, syncReason);
+    updateServerLabels();
+    renderBackupStatus();
+    document.dispatchEvent(new CustomEvent('nexus-language-change', { detail: { language: language } }));
+  }
+  function switchLanguage(next) {
+    applyLanguage(next);
+    if (currentAccount) { state.settings.language = language; commit(); }
+  }
+  document.addEventListener('click', function (event) {
+    var button = event.target.closest('[data-language]');
+    if (button) switchLanguage(button.getAttribute('data-language'));
+  });
+  new MutationObserver(function (records) {
+    records.forEach(function (record) {
+      if (record.type === 'characterData') translateTextNode(record.target);
+      else if (record.type === 'attributes') translateElement(record.target);
+      else record.addedNodes.forEach(function (node) {
+        if (node.nodeType === 3) translateTextNode(node);
+        else if (node.nodeType === 1) translateElement(node);
+      });
+    });
+  }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['placeholder', 'aria-label', 'title'] });
   var currentAccount = null;
   var syncTimer = null;
+  var backupTimer = null;
+  var syncMode = 'saved';
+  var syncReason = '';
+  var conflictBackupReady = false;
+  var serverUrl = '';
+  var backupInfo = null;
   var AUTH_ENABLED = false;          // 功能完善前暂时关闭进入密码；重新启用时改为 true
   var SESSION_KEY = 'wb_nexus_unlocked';
   var THEME_ORDER = ['dark', 'light', 'auto'];   // 点击循环顺序
@@ -1068,6 +1172,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     var name = String(app.name || '').trim();
     return Object.prototype.hasOwnProperty.call(LOCAL_APP_IDS, name) ? LOCAL_APP_IDS[name] : '';
   }
+  function appDisplayName(app) { return localAppId(app) ? tr(app.name) : app.name; }
   function isNotionApp(app) { return String(app.name || '').trim().toLowerCase() === 'notion'; }
 
   /* 备忘录：可选的卡片标记色（深空黑主题下的高饱和色，用于左侧色条做肉眼区分） */
@@ -1075,13 +1180,6 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   /* 保留旧数据版本字段，防止升级时重新写入历史演示内容。 */
   var MEMO_SEED_VER = 1;
 
-  /* 新闻速览：分类标签 + 数据源映射（聚合数据新闻头条 API，type 参数） */
-  var NEWS_TABS = [
-    { key: 'international', label: '国际', type: 'guoji' },
-    { key: 'domestic', label: '国内', type: 'guonei' },
-    { key: 'ai', label: 'AI', type: 'keji' }
-  ];
-  var NEWS_API = 'https://v.juhe.cn/toutiao/index';
   /* ========================================================
      1. 数据层：账号数据只通过已认证的服务端接口读写。
      ======================================================== */
@@ -1094,12 +1192,12 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       if (!this.sync) return Promise.resolve(false);
       return this.sync.save({
         tasks: data.tasks, recurring: data.recurring, links: data.links, memos: data.memos,
-        news: { fetchedAt: data.news.fetchedAt, cached: data.news.cached },
         settings: {
           lastRollover: data.settings.lastRollover,
           appPack: data.settings.appPack,
           memoSeed: data.settings.memoSeed,
-          theme: data.settings.theme
+          theme: data.settings.theme,
+          language: data.settings.language
         }
       });
     }
@@ -1113,11 +1211,9 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     recurring: [],
     links: [],
     memos: [],
-    news: { key: '', fetchedAt: '', cached: { international: [], domestic: [], ai: [] } },
-    settings: { lastRollover: '', seeded: true, theme: 'dark' },
+    settings: { lastRollover: '', seeded: true, theme: 'dark', language: language },
     ui: {
       tab: 'home',
-      newsTab: 'international',
       editingTaskId: null,
       editingLinkId: null,
       editingMemoId: null,
@@ -1192,17 +1288,18 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   function shortDate(s) {
     var d = parseDate(s);
     if (!d) return '';
+    if (language === 'en-US') return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(d);
     return pad2(d.getMonth() + 1) + '月' + pad2(d.getDate()) + '日';
   }
   function dueLabel(task) {
     var t = todayStr();
     var timeStr = task.time ? ' ' + task.time : '';
-    if (!task.due) return task.time ? ('今天 ' + task.time) : '未设截止';
+    if (!task.due) return task.time ? tr('今天 {time}', { time: task.time }) : tr('未设截止');
     var d = diffDays(task.due, t);
-    if (d < 0) return '逾期 ' + Math.abs(d) + ' 天' + (task.time ? ' · ' + task.time : '');
-    if (d === 0) return task.time ? ('今天 ' + task.time) : '今天到期';
-    if (d === 1) return '明天' + timeStr + '到期';
-    if (d <= 7) return d + ' 天后 · ' + shortDate(task.due) + timeStr;
+    if (d < 0) return tr('逾期 {days} 天', { days: Math.abs(d) }) + (task.time ? ' · ' + task.time : '');
+    if (d === 0) return task.time ? tr('今天 {time}', { time: task.time }) : tr('今天到期');
+    if (d === 1) return tr('明天{time}到期', { time: timeStr });
+    if (d <= 7) return tr('{days} 天后 · {date}{time}', { days: d, date: shortDate(task.due), time: timeStr });
     return shortDate(task.due) + timeStr;
   }
 
@@ -1328,7 +1425,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   function seedData() {
     var t = todayStr();
     return {
-      settings: { lastRollover: t, seeded: true, appPack: APP_PACK_VER, memoSeed: MEMO_SEED_VER },
+      settings: { lastRollover: t, seeded: true, appPack: APP_PACK_VER, memoSeed: MEMO_SEED_VER, language: language },
       tasks: [],
       recurring: [],
       links: APP_PACK.map(function (a) {
@@ -1499,21 +1596,22 @@ body[data-auth="off"] #pwdPanel{display:none!important}
         if (!matches([task.title, task.project, task.due, task.time])) return;
         var labels = { todo: '待办', doing: '进行中', done: '已完成' };
         results.push({ type: 'task', id: task.id, title: task.title,
-          detail: [labels[task.status] || '待办', task.project || '未分类', task.due || '未设截止'].join(' · ') });
+          detail: [tr(labels[task.status] || '待办'), task.project || tr('未分类'), task.due || tr('未设截止')].join(' · ') });
       });
     }
     if (type === 'all' || type === 'memo') {
       state.memos.forEach(function (memo) {
         if (!matches([memo.title, memo.group, memo.body])) return;
         results.push({ type: 'memo', id: memo.id, title: memo.title,
-          detail: (memo.group || '未分组') + ' · ' + String(memo.body || '').replace(/\s+/g, ' ').slice(0, 90) });
+          detail: (memo.group === '未分组' || !memo.group ? tr('未分组') : memo.group) + ' · ' + String(memo.body || '').replace(/\s+/g, ' ').slice(0, 90) });
       });
     }
     if (type === 'all' || type === 'app') {
       state.links.forEach(function (app) {
         if (!matches([app.name, app.group, app.desc, app.url])) return;
-        results.push({ type: 'app', id: app.id, title: app.name,
-          detail: (app.group || '未分组') + ' · ' + (app.desc || app.url || '') });
+        results.push({ type: 'app', id: app.id, title: appDisplayName(app),
+          detail: (localAppId(app) ? tr(app.group || '未分组') : (app.group || tr('未分组'))) + ' · ' +
+            (localAppId(app) ? tr(app.desc || app.url || '') : (app.desc || app.url || '')) });
       });
     }
     return results;
@@ -1523,7 +1621,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     return '<button type="button" class="search-result' + (index === searchUi.selected ? ' active' : '') +
       '" id="searchResult-' + index + '" data-act="search-result" data-type="' + esc(item.type) +
       '" data-id="' + esc(item.id) + '"><span class="search-kind">' + labels[item.type] +
-      '</span><span class="search-copy"><b>' + esc(item.title) + '</b><small>' +
+      '</span><span class="search-copy"><b data-user-content>' + esc(item.title) + '</b><small>' +
       esc(item.detail || '') + '</small></span></button>';
   }
   function setTaskStatus(id, status) {
@@ -1558,12 +1656,48 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   /* ========================================================
      6. 渲染层（只读 state → 写 DOM，互不调用）
      ======================================================== */
-  function setSync(mode) {
+  function renderSyncPanel() {
+    var panel = document.getElementById('syncPanel');
+    if (!panel) return;
+    var headline = document.getElementById('syncHeadline');
+    var detail = document.getElementById('syncDetail');
+    var retry = document.getElementById('btnSyncRetry');
+    var reload = document.getElementById('btnSyncReload');
+    if (syncMode === 'conflict') {
+      headline.textContent = tr('检测到同步冲突');
+      detail.textContent = tr('另一台设备先保存了修改。当前编辑仍保留在此页。先导出当前数据并确认文件已保存，再读取服务器版本。');
+    } else if (syncMode === 'offline') {
+      headline.textContent = tr('同步暂时失败');
+      detail.textContent = tr(syncReason || '连接服务器失败') + (language === 'en-US' ? '. ' : '。') +
+        tr('当前编辑仍保留在此页，请检查连接后重试；退出前建议导出当前数据。');
+    } else if (syncMode === 'saving') {
+      headline.textContent = tr('正在同步');
+      detail.textContent = tr('正在将当前修改保存到服务器。');
+    } else {
+      headline.textContent = tr('数据已同步');
+      detail.textContent = tr('当前修改已保存到所连接的服务器。');
+    }
+    if (retry) retry.classList.toggle('hidden', syncMode !== 'offline');
+    if (reload) {
+      reload.classList.toggle('hidden', syncMode !== 'conflict');
+      reload.disabled = !conflictBackupReady;
+      reload.title = syncMode === 'conflict' && !conflictBackupReady ? tr('请先导出当前数据') : '';
+    }
+  }
+
+  function setSync(mode, message) {
+    syncMode = mode;
+    syncReason = message || '';
     var box = document.getElementById('syncBox');
     var txt = document.getElementById('syncText');
     if (!box || !txt) return;
     box.setAttribute('data-s', mode);
-    txt.textContent = mode === 'saving' ? '正在同步…' : mode === 'conflict' ? '同步冲突，请导出备份' : mode === 'offline' ? '同步失败，请导出备份' : '云端已同步';
+    txt.textContent = tr(mode === 'saving' ? '正在同步…' : mode === 'conflict' ? '同步冲突，请导出备份' : mode === 'offline' ? '同步失败，请导出备份' : '云端已同步');
+    renderSyncPanel();
+    if (mode === 'offline' || mode === 'conflict') {
+      document.getElementById('syncPanel').classList.remove('hidden');
+      box.setAttribute('aria-expanded', 'true');
+    }
   }
 
   function renderQuickBar() {
@@ -1583,18 +1717,18 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     });
     var html = groups.map(function (g) {
       var items = g.items.map(function (l) {
-        var ch = (l.name || '?').trim().charAt(0);
+        var ch = (appDisplayName(l) || '?').trim().charAt(0);
         var color = PRESET_COLORS[hashCode(l.name || '') % PRESET_COLORS.length];
         var tag = localAppId(l) || (l.protocol && String(l.protocol).trim()) ? '<span class="qtype">本机</span>' : '';
         var isLocal = !!localAppId(l) || (l.kind === 'local' && String(l.protocol || '').trim());
         if (isLocal) {
           return '<button type="button" class="qitem" data-act="app-launch" data-id="' + l.id + '" title="启动本机应用">' +
             '<span class="qlogo" style="background:' + color + '">' + esc(ch) + '</span>' +
-            '<span>' + esc(l.name) + '</span>' + tag + '</button>';
+            '<span' + (localAppId(l) ? '' : ' data-user-content') + '>' + esc(appDisplayName(l)) + '</span>' + tag + '</button>';
         }
         return '<a class="qitem" href="' + esc(safeHttpUrl(l.url) || '#') + '" target="_blank" rel="noopener noreferrer" title="' + esc(l.url) + '">' +
           '<span class="qlogo" style="background:' + color + '">' + esc(ch) + '</span>' +
-          '<span>' + esc(l.name) + '</span>' + tag + '</a>';
+          '<span' + (localAppId(l) ? '' : ' data-user-content') + '>' + esc(appDisplayName(l)) + '</span>' + tag + '</a>';
       }).join('');
       return '<div class="qgroup"><span class="qgroup-name">' + esc(g.name) + '</span>' + items + '</div>';
     }).join('');
@@ -1621,27 +1755,28 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     }
   }
 
-  /* 自定义应用仍沿用旧本机协议；四个内置应用由桌面主进程检测 EXE。 */
+  /* 自定义应用仍沿用旧本机协议；四个内置本机应用由 Windows 主进程检测。 */
   function launchApp(app) {
     if (!app) return;
     var builtInId = localAppId(app);
     if (builtInId) {
       if (!window.nexusDesktop || !window.nexusDesktop.openLocalApp) {
-        toast('请在 Windows 桌面版中启动「' + app.name + '」');
+        toast(tr('请在 Windows 桌面版中启动「{name}」', { name: appDisplayName(app) }));
         return;
       }
       window.nexusDesktop.openLocalApp(builtInId).then(function (result) {
-        if (result.status === 'missing') toast('这台电脑未安装「' + app.name + '」');
+        if (result.status === 'missing') toast(tr('这台电脑未安装「{name}」', { name: appDisplayName(app) }));
+        if (result.status === 'unsupported') toast(tr('此内置应用入口目前仅支持 Windows 版'));
       }).catch(function (error) {
-        toast('启动「' + app.name + '」失败：' + (error.message || error));
+        toast(tr('启动「{name}」失败：{error}', { name: appDisplayName(app), error: error.message || error }));
       });
       return;
     }
     var proto = String(app.protocol || '').trim();
-    if (!proto) { toast('「' + app.name + '」没有配置本机协议'); return; }
+    if (!proto) { toast(tr('「{name}」没有配置本机协议', { name: appDisplayName(app) })); return; }
     if (window.nexusDesktop) {
       window.nexusDesktop.openProtocol(proto).catch(function () {
-        toast('没能启动「' + app.name + '」，已为你打开对应网页');
+        toast(tr('没能启动「{name}」，已为你打开对应网页', { name: appDisplayName(app) }));
         openUrl(app.url);
       });
       return;
@@ -1668,8 +1803,8 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       var stillHere = true;
       try { stillHere = document.hasFocus ? document.hasFocus() : true; } catch (e) { stillHere = true; }
       if (!left && stillHere) {
-        if (app.kind === 'local') toast('没能启动「' + app.name + '」，本机可能未安装；已为你打开官方页面');
-        else toast('没能唤起「' + app.name + '」，本机可能没装或不支持网页唤起；已为你打开网页版');
+        if (app.kind === 'local') toast(tr('没能启动「{name}」，本机可能未安装；已为你打开官方页面', { name: appDisplayName(app) }));
+        else toast(tr('没能唤起「{name}」，本机可能没装或不支持网页唤起；已为你打开网页版', { name: appDisplayName(app) }));
         openUrl(app.url);
       }
     }, 1600);
@@ -1684,19 +1819,19 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   }
 
   function appCardHTML(a) {
-    var ch = (a.name || '?').trim().charAt(0);
+    var ch = (appDisplayName(a) || '?').trim().charAt(0);
     var color = PRESET_COLORS[hashCode(a.name || '') % PRESET_COLORS.length];
     var hasProto = !!(a.protocol && String(a.protocol).trim());
     var isLocal = !!localAppId(a) || (a.kind === 'local' && hasProto);
-    var mainLabel = isLocal ? ('启动' + a.name) : (a.kind === 'download' ? '去下载' : '网页版打开');
+    var mainLabel = isLocal ? tr('启动{name}', { name: appDisplayName(a) }) : tr(a.kind === 'download' ? '去下载' : '网页版打开');
     var mainAct = isLocal ? 'app-launch' : 'app-open';
     return '<article class="app-card" data-search-target="' + esc(a.id) + '">' +
       '<div class="app-top">' +
       '<span class="app-logo" style="background:' + color + '">' + esc(ch) + '</span>' +
-      '<div class="app-meta"><b>' + esc(a.name) + '</b><span>' + esc(a.group || '未分组') + '</span></div>' +
+      '<div class="app-meta"><b' + (localAppId(a) ? '' : ' data-user-content') + '>' + esc(appDisplayName(a)) + '</b><span' + (a.group && !localAppId(a) ? ' data-user-content' : '') + '>' + esc(localAppId(a) ? tr(a.group || '未分组') : (a.group || '未分组')) + '</span></div>' +
       appTagHTML(a) +
       '</div>' +
-      '<p class="app-desc">' + esc(a.desc || a.url) + '</p>' +
+      '<p class="app-desc"' + (localAppId(a) ? '' : ' data-user-content') + '>' + esc(localAppId(a) ? tr(a.desc || a.url) : (a.desc || a.url)) + '</p>' +
       '<div class="app-acts">' +
       '<button class="mini" data-act="' + mainAct + '" data-id="' + a.id + '">' + mainLabel + '</button>' +
       (hasProto && !isLocal ? '<button class="mini ghost" data-act="app-launch" data-id="' + a.id + '">本机打开</button>' : '') +
@@ -1724,12 +1859,12 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     var color = m.color || MEMO_COLORS[0];
     return '<article class="memo-card' + (m.pinned ? ' pin' : '') + '" data-search-target="' + esc(m.id) + '" style="--mc:' + esc(color) + '">' +
       '<div class="memo-head">' +
-      '<b>' + esc(m.title || '无标题') + '</b>' +
+      '<b data-user-content>' + esc(m.title || '无标题') + '</b>' +
       (m.pinned ? '<span class="memo-pin">置顶</span>' : '') +
       '</div>' +
       (body ? '<p class="memo-body' + (long ? ' more' : '') + '">' + esc(body) + '</p>' : '') +
       '<div class="memo-foot">' +
-      '<span class="pill">' + esc(g) + '</span>' +
+      '<span class="pill"' + (g === '未分组' ? '' : ' data-user-content') + '>' + esc(g === '未分组' ? tr(g) : g) + '</span>' +
       '<span class="pill">' + esc(shortDate(m.updated) || '') + '</span>' +
       '<span class="sp"></span>' +
       '<div class="memo-acts">' +
@@ -1750,11 +1885,11 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     var cur = state.ui.memoGroup || 'all';
 
     if (chips) {
-      var html = '<button class="chip' + (cur === 'all' ? ' on' : '') + '" data-act="memo-group" data-group="all">全部 ' + state.memos.length + '</button>';
+      var html = '<button class="chip' + (cur === 'all' ? ' on' : '') + '" data-act="memo-group" data-group="all">' + tr('全部 {count}', { count: state.memos.length }) + '</button>';
       groups.forEach(function (g) {
         var n = 0;
         state.memos.forEach(function (m) { if ((m.group || '未分组') === g) n++; });
-        html += '<button class="chip' + (cur === g ? ' on' : '') + '" data-act="memo-group" data-group="' + esc(g) + '">' + esc(g) + ' ' + n + '</button>';
+        html += '<button class="chip' + (cur === g ? ' on' : '') + '" data-act="memo-group" data-group="' + esc(g) + '">' + esc(g === '未分组' ? tr(g) : g) + ' ' + n + '</button>';
       });
       chips.innerHTML = html;
     }
@@ -1801,9 +1936,9 @@ body[data-auth="off"] #pwdPanel{display:none!important}
         (!input.value.trim() && searchUi.type === 'all' ? '输入关键词开始搜索' : '没有匹配结果，试试其他关键词或筛选条件') +
         '</div>';
     var foot = document.getElementById('searchFoot');
-    if (foot) foot.textContent = (found.length ? '找到 ' + found.length + ' 条' +
-      (found.length > 60 ? '，显示前 60 条，请缩小范围' : '') + ' · ' : '') +
-      'Ctrl+K 打开 · ↑↓ 选择 · Enter 定位 · Esc 关闭';
+    if (foot) foot.textContent = (found.length ? tr('找到 {count} 条', { count: found.length }) +
+      (found.length > 60 ? tr('，显示前 60 条，请缩小范围') : '') + ' · ' : '') +
+      tr('Ctrl+K 打开 · ↑↓ 选择 · Enter 定位 · Esc 关闭');
   }
   function openSearch() {
     var overlay = document.getElementById('searchOverlay');
@@ -1859,15 +1994,16 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   /* 首页：纯只读聚合（没有任何写入），复用 getStats / donutSVG / getTodayItems */
   function greetingText() {
     var h = new Date().getHours();
-    if (h < 5) return '夜深了';
-    if (h < 11) return '早上好';
-    if (h < 13) return '中午好';
-    if (h < 18) return '下午好';
-    if (h < 23) return '晚上好';
-    return '夜深了';
+    if (h < 5) return tr('夜深了');
+    if (h < 11) return tr('早上好');
+    if (h < 13) return tr('中午好');
+    if (h < 18) return tr('下午好');
+    if (h < 23) return tr('晚上好');
+    return tr('夜深了');
   }
   function homeDateText() {
     var d = new Date();
+    if (language === 'en-US') return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }).format(d);
     var w = ['日','一','二','三','四','五','六'][d.getDay()];
     return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日 · 周' + w;
   }
@@ -1888,6 +2024,8 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   }
 
   function renderHome() {
+    var welcome = document.getElementById('homeWelcome');
+    if (welcome) welcome.textContent = currentAccount ? tr('你好，{name}', { name: currentAccount.username }) : '';
     var greet = document.getElementById('homeGreeting');
     if (greet) greet.textContent = greetingText();
     var hd = document.getElementById('homeDate');
@@ -1916,13 +2054,13 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     if (sub) {
       var over = 0;
       state.tasks.forEach(function (x) { if (isOverdue(x)) over++; });
-      sub.textContent = '已完成 ' + s.done + ' · 当前逾期 ' + over + ' 项';
+      sub.textContent = tr('已完成 {done} · 当前逾期 {over} 项', { done: s.done, over: over });
     }
     var ringBox = document.getElementById('hcRing');
     if (ringBox) {
       ringBox.innerHTML = donutSVG(s.rate) +
-        '<div class="info"><div class="lb">完成率</div><div class="vl">总 ' + s.total + ' 项</div>' +
-        '<div class="sb">P0·P1·P2 全部计入</div></div>';
+        '<div class="info"><div class="lb">' + tr('完成率') + '</div><div class="vl">' + tr('总 {total} 项', { total: s.total }) + '</div>' +
+        '<div class="sb">' + tr('P0·P1·P2 全部计入') + '</div></div>';
     }
 
     /* 最近备忘录：按 updated 倒序取 4 条；点击跳到备忘录 Tab */
@@ -1932,12 +2070,12 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     var memosBox = document.getElementById('homeMemos');
     if (memosBox) {
       if (!memos.length) {
-        memosBox.innerHTML = '<div class="home-empty">还没有备忘录 · <a style="color:var(--cyan-2);cursor:pointer" data-act="tab" data-tab="memo">去写一条 →</a></div>';
+        memosBox.innerHTML = '<div class="home-empty">' + tr('还没有备忘录') + ' · <a style="color:var(--cyan-2);cursor:pointer" data-act="tab" data-tab="memo">' + tr('去写一条 →') + '</a></div>';
       } else {
         memosBox.innerHTML = memos.map(function (m) {
           return '<button class="hrow" data-act="tab" data-tab="memo">' +
             '<span class="dot" style="background:' + esc(m.color || MEMO_COLORS[0]) + '"></span>' +
-            '<span class="t">' + esc(m.title || '无标题') + '</span>' +
+            '<span class="t" data-user-content>' + esc(m.title || '无标题') + '</span>' +
             '<span class="badge">' + esc(m.group || '未分组') + '</span>' +
             '<span class="m">' + esc(shortDate(m.updated) || '') + '</span>' +
             '</button>';
@@ -1956,12 +2094,12 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     var tasksBox = document.getElementById('homeTasks');
     if (tasksBox) {
       if (!tasks.length) {
-        tasksBox.innerHTML = '<div class="home-empty">没有未完成的任务 · <a style="color:var(--cyan-2);cursor:pointer" data-act="tab" data-tab="tasks">去添加 →</a></div>';
+        tasksBox.innerHTML = '<div class="home-empty">' + tr('没有未完成的任务') + ' · <a style="color:var(--cyan-2);cursor:pointer" data-act="tab" data-tab="tasks">' + tr('去添加 →') + '</a></div>';
       } else {
         tasksBox.innerHTML = tasks.map(function (x) {
           return '<button class="hrow" data-act="tab" data-tab="tasks">' +
             '<span class="dot" style="background:' + esc(x.priority === 'P0' ? '#FF5C6C' : (x.priority === 'P1' ? '#FFB84D' : '#38C6F4')) + '"></span>' +
-            '<span class="t">' + esc(x.title) + '</span>' +
+            '<span class="t" data-user-content>' + esc(x.title) + '</span>' +
             (todaySet[x.id] ? '<span class="badge" style="color:var(--cyan-2);border-color:rgba(76,201,240,.42)">今天</span>' : '') +
             dueShortBadge(x.due, x.time) +
             repeatBadge(x.repeat) +
@@ -1979,7 +2117,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     var items = getTodayItems();
     if (cnt) {
       var over = items.filter(isOverdue).length;
-      cnt.textContent = items.length ? ('共 ' + items.length + ' 项' + (over ? ' · 逾期 ' + over + ' 项' : '')) : '清空状态';
+      cnt.textContent = items.length ? tr('共 {count} 项', { count: items.length }) + (over ? ' · ' + tr('逾期 {count} 项', { count: over }) : '') : tr('清空状态');
     }
     if (!items.length) {
       box.innerHTML = '<div class="empty">今天没有要处理的事项，保持这个状态。</div>';
@@ -1989,10 +2127,10 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       var over = isOverdue(x);
       return '<div class="titem' + (over ? ' over' : '') + '">' +
         '<span class="badge pri-' + esc(x.priority) + '">' + esc(x.priority) + '</span>' +
-        '<div class="tt"><b>' + esc(x.title) + '</b><span>' +
-        esc(x.project || '未分类') + ' · ' + esc(dueLabel(x)) +
-        (taskDelayDays(x) > 0 ? ' · 已延期 ' + taskDelayDays(x) + ' 天' : '') +
-        (x.repeat ? ' · ' + (REPEAT_NAME[x.repeat] || '') + '重复' : '') +
+        '<div class="tt"><b data-user-content>' + esc(x.title) + '</b><span>' +
+        esc(x.project || tr('未分类')) + ' · ' + esc(dueLabel(x)) +
+        (taskDelayDays(x) > 0 ? ' · ' + tr('已延期 {days} 天', { days: taskDelayDays(x) }) : '') +
+        (x.repeat ? ' · ' + tr('{period}重复', { period: tr(REPEAT_NAME[x.repeat] || '') }) : '') +
         '</span></div>' +
         '<div class="acts">' +
         '<button class="mini" data-act="today-done" data-id="' + x.id + '">完成</button>' +
@@ -2025,13 +2163,13 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     return '<article class="card' + (over ? ' over' : '') + (x.status === 'done' ? ' done' : '') + '" draggable="true" data-id="' + esc(x.id) + '" data-search-target="' + esc(x.id) + '">' +
       '<div class="card-top">' +
       '<span class="badge pri-' + esc(x.priority) + '">' + esc(x.priority) + '</span>' +
-      '<span class="pill">' + esc(x.project || '未分类') + '</span>' +
+      '<span class="pill">' + esc(x.project || tr('未分类')) + '</span>' +
       repeatBadge(x.repeat) +
       '</div>' +
       '<p class="card-title">' + esc(x.title) + '</p>' +
       '<div class="card-meta">' +
       '<span class="du">' + esc(dueLabel(x)) + '</span>' +
-      (taskDelayDays(x) > 0 ? '<span class="de">已延期 ' + taskDelayDays(x) + ' 天</span>' : '') +
+      (taskDelayDays(x) > 0 ? '<span class="de">' + tr('已延期 {days} 天', { days: taskDelayDays(x) }) + '</span>' : '') +
       '</div>' +
       '<div class="card-acts">' +
       '<button class="abtn" data-act="task-prev" data-id="' + x.id + '" title="上一个状态">' + ICON.prev + '</button>' +
@@ -2135,126 +2273,11 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     var el = document.getElementById('dataHint');
     if (!el) return;
     if (state.tasks.length >= 30) {
-      el.textContent = '数据已积累 ' + state.tasks.length + ' 条，建议导出备份一次。';
+      el.textContent = tr('数据已积累 {count} 条，建议导出备份一次。', { count: state.tasks.length });
       el.classList.remove('hidden');
     } else {
       el.classList.add('hidden');
     }
-  }
-
-  /* 新闻：仅显示已拉取的缓存；timeStr 把 "YYYY-MM-DD HH:MM:SS" 压成 "MM-DD HH:MM" */
-  function newsItems(tabKey) {
-    var cached = state.news.cached && state.news.cached[tabKey];
-    if (cached && cached.length) return cached;
-    return [];
-  }
-  function newsTimeStr(date) {
-    if (!date) return '';
-    var s = String(date);
-    var m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T]?(\d{2}:\d{2})?/);
-    if (!m) return s.slice(0, 16);
-    return m[2] + '-' + m[3] + (m[4] ? ' ' + m[4] : '');
-  }
-  function renderNews() {
-    var tabsBox = document.getElementById('newsTabs');
-    var listBox = document.getElementById('newsList');
-    var srcBox = document.getElementById('newsSrc');
-    if (!listBox) return;
-    if (tabsBox) {
-      tabsBox.innerHTML = NEWS_TABS.map(function (t) {
-        return '<button class="ntab' + (state.ui.newsTab === t.key ? ' on' : '') + '" data-act="news-tab" data-ntab="' + t.key + '">' + t.label + '</button>';
-      }).join('');
-    }
-    var items = newsItems(state.ui.newsTab);
-    if (!items.length) {
-      listBox.innerHTML = '<div class="news-empty">暂无该分类新闻</div>';
-    } else {
-      listBox.innerHTML = items.map(function (n) {
-        var inner = '<span class="n-dot"></span>' +
-          '<span class="n-body">' +
-          '<span class="n-title">' + esc(n.title) + '</span>' +
-          '<span class="n-meta">' +
-          (n.source ? '<span>' + esc(n.source) + '</span>' : '') +
-          (n.date ? '<span>' + esc(newsTimeStr(n.date)) + '</span>' : '') +
-          '</span></span>';
-        var href = safeHttpUrl(n.url);
-        return href
-          ? '<a class="news-item" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' + inner + '</a>'
-          : '<div class="news-item">' + inner + '</div>';
-      }).join('');
-    }
-    if (srcBox) {
-      if (state.news.fetchedAt) {
-        srcBox.textContent = '已更新 ' + newsTimeStr(state.news.fetchedAt);
-      } else {
-        srcBox.textContent = state.news.key ? '已配置 Key · 点击刷新拉取' : '暂无新闻 · 配置 Key 后刷新可拉取实时新闻';
-      }
-    }
-  }
-
-  /* 拉取单个分类：type=guoji/guonei/keji，带 key；成功返回数组，失败返回 null */
-  function fetchNewsType(type) {
-    return new Promise(function (resolve) {
-      if (!state.news.key) { resolve(null); return; }
-      var url = NEWS_API + '?type=' + type + '&key=' + encodeURIComponent(state.news.key) + '&page_size=15';
-      try {
-        fetch(url)
-          .then(function (r) { return r.json(); })
-          .then(function (j) {
-            if (j && j.error_code === 0 && j.result && j.result.data) {
-              resolve(j.result.data.map(function (n) {
-                return { title: n.title || '', source: n.author_name || '', date: n.date || '', url: n.url || '' };
-              }));
-            } else {
-              resolve(null);
-            }
-          })
-          .catch(function () { resolve(null); });
-      } catch (e) { resolve(null); }
-    });
-  }
-
-  function onNewsRefresh() {
-    var btn = document.getElementById('btnNewsRefresh');
-    if (!state.news.key) {
-      toast('请先设置 API Key（免费申请：juhe.cn）');
-      onNewsKey();
-      return;
-    }
-    if (btn) { btn.disabled = true; btn.textContent = '拉取中…'; }
-    setSync('saving');
-    var types = { international: 'guoji', domestic: 'guonei', ai: 'keji' };
-    var keys = Object.keys(types);
-    var pending = keys.length, gotAny = false;
-    keys.forEach(function (k) {
-      fetchNewsType(types[k]).then(function (arr) {
-        if (arr && arr.length) { state.news.cached[k] = arr; gotAny = true; }
-        pending--;
-        if (pending === 0) {
-          setSync('saved');
-          if (btn) { btn.disabled = false; btn.textContent = '刷新'; }
-          if (gotAny) {
-            state.news.fetchedAt = new Date().getTime();
-            commit();
-            toast('新闻已更新');
-          } else {
-            toast('拉取失败：可能浏览器跨域受限，或 Key 无效');
-            renderNews();
-          }
-        }
-      });
-    });
-  }
-
-  function onNewsKey() {
-    var cur = state.news.key || '';
-    var v = window.prompt('请输入聚合数据「新闻头条」API Key（仅本次浏览器会话保存，关闭后需重填）。留空则清除。', cur);
-    if (v === null) return; // 用户取消
-    v = (v || '').trim();
-    state.news.key = v;
-    renderNews();
-    if (v) { toast('Key 已保存，点击「刷新」拉取新闻'); onNewsRefresh(); }
-    else { toast('Key 已清除'); }
   }
 
   /* 模块元信息：侧栏导航 / 底部 Tab / 顶栏标题 共用同一份定义 */
@@ -2277,7 +2300,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     var meta = TAB_META[state.ui.tab] || TAB_META.tasks;
     var tt = document.getElementById('topTitle');
     if (tt) tt.innerHTML = esc(meta.title) + '<span class="topbar-sub">' + esc(meta.sub) + '</span>';
-    try { document.title = 'NEXUS · ' + meta.title; } catch (e) { /* 忽略 */ }
+    try { document.title = 'NEXUS · ' + tr(meta.title); } catch (e) { /* 忽略 */ }
 
     var items = getTodayItems();
     var over = items.filter(isOverdue).length;
@@ -2314,10 +2337,10 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     });
     var soon = items.length - over - dueToday;
     var parts = [];
-    if (over) parts.push('逾期 ' + over + ' 项');
-    if (dueToday) parts.push('今天到期 ' + dueToday + ' 项');
-    if (soon) parts.push('3 天内 ' + soon + ' 项');
-    txt.textContent = parts.join(' · ') + (items[0] ? '　最紧：' + items[0].title : '');
+    if (over) parts.push(tr('逾期 {count} 项', { count: over }));
+    if (dueToday) parts.push(tr('今天到期 {count} 项', { count: dueToday }));
+    if (soon) parts.push(tr('3 天内 {count} 项', { count: soon }));
+    txt.textContent = parts.join(' · ') + (items[0] ? tr('　最紧：{title}', { title: items[0].title }) : '');
     strip.classList.remove('hidden');
   }
 
@@ -2339,7 +2362,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   function donutSVG(pct) {
     var r = 46, c = 2 * Math.PI * r;
     var off = c * (1 - Math.max(0, Math.min(100, pct)) / 100);
-    return '<svg viewBox="0 0 120 120" class="donut" role="img" aria-label="完成率 ' + pct + '%">' +
+    return '<svg viewBox="0 0 120 120" class="donut" role="img" aria-label="' + tr('完成率 {percent}%', { percent: pct }) + '">' +
       '<defs><linearGradient id="nxGrad" x1="0" y1="0" x2="1" y2="1">' +
       '<stop offset="0" stop-color="#38C6F4"/><stop offset="1" stop-color="#3DDC97"/></linearGradient></defs>' +
       '<circle cx="60" cy="60" r="' + r + '" fill="none" stroke="rgba(86,196,255,.14)" stroke-width="10"/>' +
@@ -2413,18 +2436,20 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     renderBoard();
     renderRecurring();
     renderStats();
-    renderNews();
     renderApps();
     renderMemo();
     renderDataHint();
     syncTaskForm();
     syncMemoForm();
+    translateElement(document.body);
   }
 
   function commit() {
+    if (Store.sync && Store.sync.hasConflict && Store.sync.hasConflict()) conflictBackupReady = false;
     setSync('saving');
     var saved = Store.save(state).then(function (ok) {
-      if (!ok) toast('同步失败：请导出当前数据备份，再重试同步');
+      if (!ok && !(Store.sync && Store.sync.hasConflict && Store.sync.hasConflict()))
+        toast('同步失败：请导出当前数据备份，再重试同步');
       return ok;
     });
     refreshAll();
@@ -2437,7 +2462,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
   function toast(msg) {
     var el = document.getElementById('toast');
     if (!el) return;
-    el.textContent = msg;
+    el.textContent = tr(msg);
     el.classList.add('on');
     clearTimeout(toast._t);
     toast._t = setTimeout(function () { el.classList.remove('on'); }, 2000);
@@ -2663,12 +2688,12 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       recurring: state.recurring,
       links: state.links,
       memos: state.memos,
-      news: { fetchedAt: state.news.fetchedAt || '', cached: state.news.cached || { international: [], domestic: [], ai: [] } },
       settings: {
         lastRollover: state.settings.lastRollover,
         appPack: state.settings.appPack || 0,
         memoSeed: state.settings.memoSeed || 0,
-        theme: state.settings.theme || 'dark'
+        theme: state.settings.theme || 'dark',
+        language: state.settings.language || language
       }
     };
     var str = JSON.stringify(payload, null, 2);
@@ -2681,9 +2706,15 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       a.click();
       document.body.removeChild(a);
       setTimeout(function () { URL.revokeObjectURL(a.href); }, 1500);
+      if (Store.sync && Store.sync.hasConflict()) {
+        conflictBackupReady = true;
+        renderSyncPanel();
+      }
       toast('已导出备份文件');
+      return true;
     } catch (e) {
       toast('导出失败，请换个浏览器试试');
+      return false;
     }
   }
 
@@ -2765,29 +2796,15 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       checkDate(x.updated, '备忘录更新日期');
       if (x.color && MEMO_COLORS.indexOf(x.color) < 0) throw new Error('备忘录颜色格式错误');
     });
-    if (data.news != null && (typeof data.news !== 'object' || Array.isArray(data.news))) throw new Error('新闻数据格式错误');
-    if (data.news && data.news.fetchedAt != null &&
-        typeof data.news.fetchedAt !== 'string' && typeof data.news.fetchedAt !== 'number') throw new Error('新闻更新时间格式错误');
-    if (data.news && data.news.cached) {
-      var cached = data.news.cached;
-      if (!cached || typeof cached !== 'object' || Array.isArray(cached)) throw new Error('新闻缓存格式错误');
-      NEWS_TABS.forEach(function (tab) {
-        cached[tab.key] = list(cached[tab.key], '新闻缓存');
-        cached[tab.key].forEach(function (n) {
-          if (!n || typeof n !== 'object' || Array.isArray(n)) throw new Error('新闻条目格式错误');
-          checkText(n.title, '新闻标题');
-          checkText(n.source, '新闻来源');
-          checkText(n.date, '新闻日期');
-          if (n.url && !safeHttpUrl(n.url)) throw new Error('新闻网址仅支持 http 或 https');
-        });
-      });
-    }
     if (data.settings != null && (typeof data.settings !== 'object' || Array.isArray(data.settings))) throw new Error('设置格式错误');
     if (data.settings) {
       if (data.settings.password && (typeof data.settings.password !== 'string' || !/^\d{4}$/.test(data.settings.password))) throw new Error('密码格式错误');
       if (data.settings.theme && ['dark', 'light', 'auto'].indexOf(data.settings.theme) < 0) throw new Error('主题格式错误');
+      if (data.settings.language && ['zh-CN', 'en-US'].indexOf(data.settings.language) < 0) throw new Error('语言格式错误');
       checkDate(data.settings.lastRollover, '延期记录日期');
     }
+    // Older exports may contain news cache; keep their other data importable without restoring the removed feature.
+    delete data.news;
     return data;
   }
   function onImportFile(e) {
@@ -2800,8 +2817,8 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       try { data = JSON.parse(String(reader.result)); }
       catch (err) { toast('文件解析失败，不是有效的 JSON'); return; }
       try { data = normalizeImport(data); }
-      catch (err) { toast('导入失败：' + err.message); return; }
-      if (!window.confirm('导入将覆盖当前全部数据（现有 ' + state.tasks.length + ' 条任务），确定继续？')) return;
+      catch (err) { toast(tr('导入失败：{error}', { error: tr(err.message) })); return; }
+      if (!window.confirm(tr('导入将覆盖当前全部数据（现有 {count} 条任务），确定继续？', { count: state.tasks.length }))) return;
       state.tasks = data.tasks || [];
       state.recurring = data.recurring || [];
       state.links = (data.links || []).map(function (l) {
@@ -2812,10 +2829,6 @@ body[data-auth="off"] #pwdPanel{display:none!important}
           type: l.protocol ? 'app' : (l.type || 'web'), demo: l.demo
         };
       });
-    if (data.news && typeof data.news === 'object') {
-        state.news.fetchedAt = data.news.fetchedAt || '';
-        state.news.cached = data.news.cached || { international: [], domestic: [], ai: [] };
-      }
       state.memos = (data.memos || []).map(function (m) {
         return {
           id: m.id || uid(), title: m.title || '', group: m.group || '未分组',
@@ -2829,10 +2842,12 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       if (data.settings && data.settings.appPack) state.settings.appPack = Number(data.settings.appPack) || 0;
       if (data.settings && data.settings.memoSeed) state.settings.memoSeed = Number(data.settings.memoSeed) || 0;
       if (data.settings && data.settings.theme) state.settings.theme = data.settings.theme;
+      if (data.settings && data.settings.language) state.settings.language = data.settings.language;
       removeLegacyExamples();
       migrateAppPack();
       migrateMemoSeed();
       applyTheme(state.settings.theme || 'dark');
+      applyLanguage(state.settings.language || language);
       state.ui.editingTaskId = null;
       state.ui.editingLinkId = null;
       state.ui.memoQuery = '';
@@ -2842,7 +2857,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       clearLinkForm();
       clearMemoForm();
       commit();
-      toast('已导入 ' + state.tasks.length + ' 条任务');
+      toast(tr('已导入 {count} 条任务', { count: state.tasks.length }));
     };
     reader.onerror = function () { toast('读取文件失败'); };
     reader.readAsText(file);
@@ -2866,7 +2881,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     document.getElementById('pwdNew').value = '';
     document.getElementById('pwdPanel').classList.add('hidden');
     commit();
-    toast('密码已更新为 ' + v);
+    toast(tr('密码已更新为 {pin}', { pin: v }));
   }
 
   /* ---------- 复制 ---------- */
@@ -3000,7 +3015,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     setTaskStatus(dragId, st);
     dragId = null;
     clearColHighlight();
-    toast('已移动到「' + (nameMap[st] || st) + '」');
+    toast(tr('已移动到「{status}」', { status: tr(nameMap[st] || st) }));
     commit();
   }
 
@@ -3041,26 +3056,10 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       return;
     }
 
-    if (act === 'news-tab') {
-      state.ui.newsTab = el.getAttribute('data-ntab') || 'international';
-      renderNews();
-      return;
-    }
-
-    if (act === 'news-refresh') {
-      onNewsRefresh();
-      return;
-    }
-
-    if (act === 'news-key') {
-      onNewsKey();
-      return;
-    }
-
     if (act === 'quick-due') {
       var days = Number(el.getAttribute('data-days')) || 0;
       document.getElementById('tfDue').value = addDays(todayStr(), days);
-      toast('截止日已设为 ' + shortDate(addDays(todayStr(), days)));
+      toast(tr('截止日已设为 {date}', { date: shortDate(addDays(todayStr(), days)) }));
       return;
     }
 
@@ -3123,7 +3122,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     if (act === 'task-del') {
       task = findTask(id);
       if (!task) return;
-      if (!window.confirm('确定删除任务「' + task.title + '」？删除后无法恢复。')) return;
+      if (!window.confirm(tr('确定删除任务「{title}」？删除后无法恢复。', { title: task.title }))) return;
       removeTask(id);
       if (state.ui.editingTaskId === id) state.ui.editingTaskId = null;
       commit();
@@ -3132,7 +3131,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     }
 
     if (act === 'rec-del') {
-      if (!window.confirm('确定删除这条周期规则？已生成的历史任务不受影响。')) return;
+      if (!window.confirm(tr('确定删除这条周期规则？已生成的历史任务不受影响。'))) return;
       state.recurring = state.recurring.filter(function (r) { return r.id !== id; });
       commit();
       toast('周期规则已删除');
@@ -3182,7 +3181,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     if (act === 'link-del') {
       var target = findLink(id);
       if (!target) return;
-      if (!window.confirm('确定删除「' + target.name + '」？')) return;
+      if (!window.confirm(tr('确定删除「{name}」？', { name: appDisplayName(target) }))) return;
       state.links = state.links.filter(function (l) { return l.id !== id; });
       if (state.ui.editingLinkId === id) clearLinkForm();
       commit();
@@ -3236,7 +3235,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     if (act === 'memo-del') {
       var dm = findMemo(id);
       if (!dm) return;
-      if (!window.confirm('确定删除备忘录「' + dm.title + '」？删除后无法恢复。')) return;
+      if (!window.confirm(tr('确定删除备忘录「{title}」？删除后无法恢复。', { title: dm.title }))) return;
       state.memos = state.memos.filter(function (m) { return m.id !== id; });
       if (state.ui.editingMemoId === id) clearMemoForm();
       commit();
@@ -3387,6 +3386,37 @@ body[data-auth="off"] #pwdPanel{display:none!important}
 
     var btnExport = document.getElementById('btnExport');
     if (btnExport) btnExport.addEventListener('click', exportJSON);
+    var syncBox = document.getElementById('syncBox');
+    var syncPanel = document.getElementById('syncPanel');
+    syncBox.addEventListener('click', function () {
+      var opening = syncPanel.classList.contains('hidden');
+      syncPanel.classList.toggle('hidden', !opening);
+      syncBox.setAttribute('aria-expanded', String(opening));
+      if (opening) renderSyncPanel();
+    });
+    document.getElementById('btnSyncRetry').addEventListener('click', async function () {
+      if (!Store.sync) return;
+      var button = this;
+      button.disabled = true;
+      try { await Store.sync.retry(); }
+      catch (error) { setSync('offline', error.message || '连接服务器失败'); }
+      finally { button.disabled = false; }
+    });
+    document.getElementById('btnSyncExport').addEventListener('click', exportJSON);
+    document.getElementById('btnSyncReload').addEventListener('click', async function () {
+      if (!Store.sync || !Store.sync.hasConflict() || !conflictBackupReady) return;
+      if (!window.confirm(tr('确认 JSON 备份文件已保存到电脑？读取服务器版本将替换此页尚未同步的修改。'))) return;
+      var button = this;
+      button.disabled = true;
+      try {
+        await Store.sync.discardAndReload();
+        conflictBackupReady = false;
+        syncPanel.classList.add('hidden');
+        syncBox.setAttribute('aria-expanded', 'false');
+      } catch (error) {
+        setSync('offline', error.message || '连接服务器失败');
+      } finally { renderSyncPanel(); }
+    });
 
     var btnImport = document.getElementById('btnImport');
     if (btnImport) {
@@ -3436,11 +3466,8 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     state.recurring = loaded.recurring || [];
     state.links = loaded.links || [];
     state.memos = loaded.memos || [];
-    state.news = {
-      key: '', fetchedAt: loaded.news && loaded.news.fetchedAt || '',
-      cached: loaded.news && loaded.news.cached || { international: [], domestic: [], ai: [] }
-    };
-    state.settings = Object.assign({ lastRollover: '', appPack: 0, memoSeed: 0, theme: 'dark' }, loaded.settings || {});
+    state.settings = Object.assign({ lastRollover: '', appPack: 0, memoSeed: 0, theme: 'dark', language: language }, loaded.settings || {});
+    applyLanguage(state.settings.language);
     removeLegacyExamples();
     migrateAppPack();
     migrateMemoSeed();
@@ -3449,12 +3476,60 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     refreshAll();
     return before !== JSON.stringify({
       tasks: state.tasks, recurring: state.recurring, links: state.links,
-      memos: state.memos, news: loaded.news, settings: state.settings
+      memos: state.memos, settings: state.settings
     });
   }
 
+  function updateServerLabels() {
+    var display = tr('读取中…');
+    if (serverUrl) {
+      try {
+        var parsed = new URL(serverUrl);
+        var local = ['127.0.0.1', 'localhost', '[::1]'].indexOf(parsed.hostname) >= 0;
+        display = tr(local ? '本机服务' : '远程服务') + ' · ' + parsed.origin;
+      } catch (e) { display = tr('服务器地址读取失败'); }
+    }
+    ['loginServer', 'activeServer'].forEach(function (id) {
+      var node = document.getElementById(id);
+      if (node) node.textContent = display;
+    });
+  }
+
+  async function refreshServerInfo() {
+    try {
+      var info = await Account.serverInfo();
+      serverUrl = info.url || '';
+    } catch (error) { serverUrl = ''; }
+    updateServerLabels();
+  }
+
+  function renderBackupStatus() {
+    var node = document.getElementById('backupStatus');
+    if (!node) return;
+    if (!backupInfo) { node.textContent = tr('自动备份：查询中…'); return; }
+    if (!backupInfo.ok || !backupInfo.enabled) {
+      node.textContent = tr('自动备份：状态不可用，请检查服务器版本或连接');
+    } else if (backupInfo.state === 'error') {
+      node.textContent = tr('自动备份失败：请检查服务器磁盘空间和目录权限');
+    } else if (backupInfo.lastSuccessAt) {
+      var date = new Date(backupInfo.lastSuccessAt);
+      var when = Number.isNaN(date.getTime()) ? backupInfo.lastSuccessAt :
+        date.toLocaleString(language === 'en-US' ? 'en-US' : 'zh-CN');
+      node.textContent = tr('最近自动备份：{time}（保留 {count} 份）', { time: when, count: backupInfo.retained || 0 }) +
+        (backupInfo.pendingChanges ? tr('，最新修改待写入快照') : '');
+    } else {
+      node.textContent = tr('自动备份：正在创建首份快照');
+    }
+  }
+
+  async function refreshBackupStatus() {
+    try { backupInfo = await Account.backupStatus(); }
+    catch (error) { backupInfo = { ok: false }; }
+    renderBackupStatus();
+  }
+
   function accountStatus(message) {
-    document.getElementById('accountStatus').textContent = message || '';
+    document.getElementById('accountStatus').textContent = tr(message || '');
   }
 
   function showAccount() {
@@ -3466,12 +3541,12 @@ body[data-auth="off"] #pwdPanel{display:none!important}
 
   async function enterAccount(account) {
     currentAccount = account;
+    conflictBackupReady = false;
     Store.sync = window.createNexusSync(Account, function (remote) {
       if (applyWorkspace(remote)) commit();
       toast('已从云端同步更新');
     }, function (mode, message) {
-      setSync(mode);
-      if (mode === 'conflict') toast(message + '；请先导出当前备份');
+      setSync(mode, message);
     });
     try {
       var loaded = await Store.load();
@@ -3483,6 +3558,10 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       accountStatus('');
       document.body.setAttribute('data-account', 'on');
       setSync('saved');
+      refreshServerInfo();
+      refreshBackupStatus();
+      if (backupTimer) clearInterval(backupTimer);
+      backupTimer = setInterval(refreshBackupStatus, 60 * 1000);
       if (syncTimer) clearInterval(syncTimer);
       syncTimer = setInterval(function () {
         if (!Store.sync) return;
@@ -3490,6 +3569,8 @@ body[data-auth="off"] #pwdPanel{display:none!important}
         else Store.sync.poll();
       }, 12000);
     } catch (error) {
+      if (backupTimer) clearInterval(backupTimer);
+      backupTimer = null;
       Store.sync = null;
       currentAccount = null;
       showAccount();
@@ -3504,12 +3585,17 @@ body[data-auth="off"] #pwdPanel{display:none!important}
     }
     if (syncTimer) clearInterval(syncTimer);
     syncTimer = null;
+    if (backupTimer) clearInterval(backupTimer);
+    backupTimer = null;
     var result = await Account.logout();
     if (!result.ok) { toast(result.error || '退出失败'); return; }
     Store.sync = null;
     currentAccount = null;
+    backupInfo = null;
+    conflictBackupReady = false;
+    document.getElementById('syncPanel').classList.add('hidden');
+    document.getElementById('syncBox').setAttribute('aria-expanded', 'false');
     state.tasks = []; state.recurring = []; state.links = []; state.memos = [];
-    state.news = { key: '', fetchedAt: '', cached: { international: [], domestic: [], ai: [] } };
     showAccount();
     accountStatus('已退出登录');
   }
@@ -3521,7 +3607,9 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       document.getElementById('accountLoginTab').setAttribute('aria-selected', String(mode === 'login'));
       document.getElementById('accountRegisterTab').setAttribute('aria-selected', String(mode === 'register'));
       document.getElementById('accountConfirmRow').classList.toggle('hidden', mode !== 'register');
+      document.getElementById('accountRule').classList.toggle('hidden', mode !== 'register');
       document.getElementById('accountConfirm').required = mode === 'register';
+      document.getElementById('accountName').maxLength = mode === 'register' ? 12 : 32;
       document.getElementById('accountPassword').setAttribute('autocomplete', mode === 'register' ? 'new-password' : 'current-password');
       document.getElementById('accountSubmit').textContent = mode === 'register' ? '注册并进入' : '登录';
       accountStatus('');
@@ -3541,8 +3629,8 @@ body[data-auth="off"] #pwdPanel{display:none!important}
       try {
         var result = await (mode === 'register' ? Account.register(username, password) : Account.login(username, password));
         if (!result.ok) {
-          var retry = result.retryAfterSeconds ? '，请 ' + result.retryAfterSeconds + ' 秒后再试' : '';
-          accountStatus((result.error || '操作失败') + retry);
+          var retry = result.retryAfterSeconds ? tr('，请 {seconds} 秒后再试', { seconds: result.retryAfterSeconds }) : '';
+          accountStatus(tr(result.error || '操作失败') + retry);
           return;
         }
         await enterAccount(result.account);
@@ -3558,6 +3646,7 @@ body[data-auth="off"] #pwdPanel{display:none!important}
         try {
           var result = await Account.saveServer(document.getElementById('accountServerUrl').value);
           accountStatus(result.ok ? '服务器地址已保存，请重新登录' : result.error || '保存失败');
+          if (result.ok) refreshServerInfo();
         } catch (error) { accountStatus(error.message || '保存失败'); }
       });
     }
@@ -3565,9 +3654,14 @@ body[data-auth="off"] #pwdPanel{display:none!important}
 
   async function init() {
     document.body.setAttribute('data-auth', 'off');
+    if (window.nexusDesktop && window.nexusDesktop.languageGet) {
+      try { language = I18N.normalize(await window.nexusDesktop.languageGet()); } catch (e) { /* 保留本地语言 */ }
+    }
+    applyLanguage(language);
     bindEvents();
     bindAccount();
     showAccount();
+    refreshServerInfo();
     var dueEl = document.getElementById('tfDue');
     if (dueEl && !dueEl.value) dueEl.value = todayStr();
     if (window.matchMedia) {

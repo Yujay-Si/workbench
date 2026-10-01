@@ -25,7 +25,8 @@
     logout: desktop.accountLogout,
     session: desktop.accountSession,
     workspace: desktop.accountWorkspace,
-    save: desktop.accountSave
+    save: desktop.accountSave,
+    backupStatus: desktop.accountBackupStatus
   } : {
     serverInfo: function () { return Promise.resolve({ url: location.origin }); },
     saveServer: function () { return Promise.reject(new Error('浏览器版服务器地址由当前网址决定')); },
@@ -34,6 +35,7 @@
     logout: function () { return webRequest('POST', '/api/logout', {}); },
     session: function () { return webRequest('GET', '/api/session'); },
     workspace: function () { return webRequest('GET', '/api/workspace'); },
-    save: function (revision, data) { return webRequest('PUT', '/api/workspace', { revision: revision, data: data }); }
+    save: function (revision, data) { return webRequest('PUT', '/api/workspace', { revision: revision, data: data }); },
+    backupStatus: function () { return webRequest('GET', '/api/backup-status'); }
   });
 })();

@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -7,7 +8,7 @@ const { createAccountStore, validatePassword, safeWorkspace } = require('../serv
 const { createServer } = require('../server/index.cjs');
 
 function emptyData() {
-  return { tasks: [], recurring: [], links: [], memos: [], news: { cached: {} }, settings: {} };
+  return { tasks: [], recurring: [], links: [], memos: [], settings: {} };
 }
 
 test('registration accepts text or numeric usernames and requires three password categories', async () => {
@@ -15,9 +16,29 @@ test('registration accepts text or numeric usernames and requires three password
   try {
     assert.equal((await store.register('张三123', 'Abc123*')).account.username, '张三123');
     assert.equal((await store.register('12345', 'Abc123，')).account.username, '12345');
+    assert.equal((await store.register('123456789012', 'Abcdef12345*')).account.username, '123456789012');
+    await assert.rejects(store.register('1234567890123', 'Abc123*'), { code: 'USERNAME_INVALID' });
+    assert.equal(validatePassword('Abcdef123456*'), 'Abcdef123456*');
+    assert.throws(() => validatePassword('Abc' + '1'.repeat(125) + '*'), { code: 'PASSWORD_INVALID' });
     await assert.rejects(store.register('张三123', 'Abc123*'), { code: 'USERNAME_TAKEN' });
+    await store.register('CaseName', 'Abc123*');
+    await assert.rejects(store.register('casename', 'Abc123*'), { code: 'USERNAME_TAKEN' });
     assert.throws(() => validatePassword('abcdef'), { code: 'PASSWORD_INVALID' });
     assert.throws(() => validatePassword('12345'), { code: 'PASSWORD_INVALID' });
+  } finally { store.db.close(); }
+});
+
+test('accounts created under the former length limits can still log in', async () => {
+  const store = createAccountStore(':memory:');
+  try {
+    const account = await store.register('legacy', 'Abc123*');
+    const salt = store.db.prepare('SELECT salt FROM accounts WHERE id=?').get(account.account.id).salt;
+    const oldPassword = 'LegacyPassword123*';
+    const hash = await new Promise((resolve, reject) => crypto.scrypt(oldPassword, Buffer.from(salt, 'base64'), 64,
+      { N: 1 << 17, r: 8, p: 1, maxmem: 256 * 1024 * 1024 }, (error, key) => error ? reject(error) : resolve(key)));
+    store.db.prepare('UPDATE accounts SET username=?, username_key=?, password_hash=? WHERE id=?')
+      .run('LegacyUsernameOver12', 'legacyusernameover12', hash.toString('base64'), account.account.id);
+    assert.equal((await store.login('LegacyUsernameOver12', oldPassword)).account.username, 'LegacyUsernameOver12');
   } finally { store.db.close(); }
 });
 
@@ -75,12 +96,14 @@ test('workspace snapshots omit credentials and reject stale revisions', async ()
     const data = emptyData();
     data.tasks.push({ id: 'task1', title: 'A only' });
     data.settings.password = '0000';
-    data.news.key = 'secret-news-key';
+    data.settings.language = 'en-US';
+    data.news = { key: 'secret-news-key', cached: { international: [{ title: 'Old item' }] } };
     assert.equal(store.saveWorkspace(a.account.id, 0, data).revision, 1);
     assert.equal(store.workspace(b.account.id).data, null);
     assert.equal(store.workspace(a.account.id).data.tasks[0].title, 'A only');
     assert.equal(store.workspace(a.account.id).data.settings.password, undefined);
-    assert.equal(store.workspace(a.account.id).data.news.key, undefined);
+    assert.equal(store.workspace(a.account.id).data.settings.language, 'en-US');
+    assert.equal(store.workspace(a.account.id).data.news, undefined);
     assert.throws(() => store.saveWorkspace(a.account.id, 0, emptyData()), { code: 'CONFLICT' });
     assert.equal(store.session(a.token).id, a.account.id);
     store.logout(a.token);
@@ -102,6 +125,9 @@ test('HTTP API uses the session owner and does not let another account read its 
     assert.equal((await fetch(base + '/api/workspace')).status, 401);
     const first = await post('/api/register', { username: 'first', password: 'Abc123*' });
     assert.equal(first.status, 201);
+    const duplicate = await post('/api/register', { username: 'FIRST', password: 'Abc123*' });
+    assert.equal(duplicate.status, 409);
+    assert.equal((await duplicate.json()).code, 'USERNAME_TAKEN');
     const firstCookie = first.headers.get('set-cookie').split(';')[0];
     const data = emptyData();
     data.memos.push({ id: 'private', title: '私有记录' });

@@ -58,13 +58,17 @@
     function save(data) {
       pending = snapshot(data);
       onStatus('saving', '正在同步…');
+      if (conflict) {
+        onStatus('conflict', '另一台设备已修改数据，请先处理同步冲突');
+        return Promise.resolve(false);
+      }
       if (running) queued = true;
       return start();
     }
 
     async function retry() {
       if (conflict) return false;
-      if (!pending) return true;
+      if (!pending) return poll();
       return start();
     }
 

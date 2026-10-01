@@ -71,7 +71,8 @@ function createAccountClient(configFile, fetchImpl = fetch) {
     logout: () => request('POST', '/api/logout', {}),
     session: () => token ? request('GET', '/api/session') : Promise.resolve({ ok: true, account: null }),
     getWorkspace: () => request('GET', '/api/workspace'),
-    saveWorkspace: (revision, data) => request('PUT', '/api/workspace', { revision, data })
+    saveWorkspace: (revision, data) => request('PUT', '/api/workspace', { revision, data }),
+    backupStatus: () => request('GET', '/api/backup-status')
   };
 }
 

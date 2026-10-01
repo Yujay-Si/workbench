@@ -71,7 +71,7 @@ evaluate(expressions[mode]).then((value) => {
     assert.equal(value.gateVisible, true);
     assert.equal(value.server.url, 'http://127.0.0.1:8768');
     assert.equal(value.session.account, null);
-    assert.equal(value.version, '1.2.0');
+    assert.equal(value.version, require('../package.json').version);
   } else if (mode === 'probe') {
     assert.equal(value.origin, 'nexus://app');
     assert.equal(value.updateVisible, true);

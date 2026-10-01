@@ -39,3 +39,34 @@ test('sync retains conflicting local data for backup', async () => {
   assert.equal(await sync.poll(), false);
   assert.equal(received, undefined);
 });
+
+test('new edits during a conflict stay local until the user explicitly reloads', async () => {
+  let saves = 0;
+  let remote;
+  const sync = createNexusSync({
+    workspace: async () => ({ ok: true, revision: 4, data: { value: 'remote' } }),
+    save: async () => { saves++; return { ok: false, code: 'CONFLICT', error: 'conflict' }; }
+  }, data => { remote = data; }, () => {});
+  await sync.open();
+  assert.equal(await sync.save({ value: 'first local edit' }), false);
+  assert.equal(await sync.save({ value: 'newer local edit' }), false);
+  assert.equal(saves, 1);
+  assert.equal(sync.hasUnsaved(), true);
+  assert.equal(await sync.retry(), false);
+  assert.equal(remote, undefined);
+  await sync.discardAndReload();
+  assert.equal(remote.value, 'remote');
+  assert.equal(sync.hasUnsaved(), false);
+});
+
+test('retry checks the connection after a failed poll with no pending edits', async () => {
+  let calls = 0;
+  const sync = createNexusSync({
+    workspace: async () => ({ ok: ++calls !== 2, revision: 0, data: null }),
+    save: async () => ({ ok: true, revision: 1 })
+  }, () => {}, () => {});
+  await sync.open();
+  assert.equal(await sync.poll(), false);
+  assert.equal(await sync.retry(), true);
+  assert.equal(calls, 3);
+});

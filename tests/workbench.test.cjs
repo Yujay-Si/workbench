@@ -8,9 +8,10 @@ function loadWorkbench() {
   const html = fs.readFileSync(path.join(__dirname, '..', 'nexus-workbench.html'), 'utf8');
   const script = html.match(/<script>([\s\S]*?)<\/script>/)[1].replace(
     /\}\)\(\);\s*$/,
-    'globalThis.workbenchTest = { state, Store, commit, seedData, removeLegacyExamples, migrateAppPack, localAppId, launchApp, appCardHTML, newsItems, setTaskStatus, rolloverOverdue, generateRecurring, normalizeImport: typeof normalizeImport === "function" ? normalizeImport : undefined, safeHttpUrl: typeof safeHttpUrl === "function" ? safeHttpUrl : undefined, taskDelayDays: typeof taskDelayDays === "function" ? taskDelayDays : undefined, searchRecords: typeof searchRecords === "function" ? searchRecords : undefined, searchResultHTML: typeof searchResultHTML === "function" ? searchResultHTML : undefined, addDays, todayStr };})();'
+    'globalThis.workbenchTest = { state, Store, commit, seedData, removeLegacyExamples, migrateAppPack, localAppId, launchApp, appCardHTML, setTaskStatus, rolloverOverdue, generateRecurring, renderHome, setCurrentAccount: account => { currentAccount = account; }, normalizeImport: typeof normalizeImport === "function" ? normalizeImport : undefined, safeHttpUrl: typeof safeHttpUrl === "function" ? safeHttpUrl : undefined, taskDelayDays: typeof taskDelayDays === "function" ? taskDelayDays : undefined, searchRecords: typeof searchRecords === "function" ? searchRecords : undefined, searchResultHTML: typeof searchResultHTML === "function" ? searchResultHTML : undefined, addDays, todayStr };})();'
   );
   const values = new Map();
+  const elements = new Map();
   const storage = {
     getItem: key => values.get(key) ?? null,
     setItem: (key, value) => values.set(key, value),
@@ -25,21 +26,33 @@ function loadWorkbench() {
     clearTimeout,
     localStorage: storage,
     sessionStorage: storage,
-    document: { readyState: 'loading', addEventListener() {}, getElementById() { return null; }, querySelectorAll() { return []; } },
-    window: {}
+    document: { readyState: 'loading', body: { nodeType: 1, childNodes: [], hasAttribute() { return false; } }, addEventListener() {}, getElementById(id) { return elements.get(id) || null; }, querySelectorAll() { return []; } },
+    MutationObserver: class { observe() {} },
+    window: { nexusI18n: require('../i18n/messages.js') }
   };
   vm.runInNewContext(script, context, { filename: 'nexus-workbench.html' });
-  return { ...context.workbenchTest, storage, browserWindow: context.window };
+  return { ...context.workbenchTest, storage, elements, browserWindow: context.window };
 }
 
-test('a fresh workbench contains no demonstration records or news', () => {
+test('home welcome follows the signed-in account and writes plain text', () => {
+  const wb = loadWorkbench();
+  const welcome = { textContent: '' };
+  wb.elements.set('homeWelcome', welcome);
+  wb.setCurrentAccount({ username: '<张三>' });
+  wb.renderHome();
+  assert.equal(welcome.textContent, '你好，<张三>');
+  wb.setCurrentAccount(null);
+  wb.renderHome();
+  assert.equal(welcome.textContent, '');
+});
+
+test('a fresh workbench contains no demonstration records', () => {
   const wb = loadWorkbench();
   const initial = wb.seedData();
   assert.equal(initial.tasks.length, 0);
   assert.equal(initial.recurring.length, 0);
   assert.equal(initial.memos.length, 0);
   assert.ok(initial.links.every(link => !link.demo));
-  assert.equal(wb.newsItems('international').length, 0);
   assert.deepEqual(Array.from(initial.links, link => wb.localAppId(link)), ['wechat', 'qq', 'wps', 'workbuddy']);
 });
 
@@ -123,14 +136,23 @@ test('links from imported data accept only http and https URLs', () => {
   assert.equal(wb.safeHttpUrl('https://example.com'), 'https://example.com/');
 });
 
-test('saving the workbench omits the news API key from synced data', async () => {
+test('saving the workbench omits removed legacy news data', async () => {
   const wb = loadWorkbench();
   let snapshot;
   wb.Store.sync = { save: async data => { snapshot = data; return true; } };
-  wb.state.news.key = 'private-key';
+  wb.state.news = { key: 'private-key', cached: { international: [{ title: 'Old item' }] } };
   assert.equal(await wb.Store.save(wb.state), true);
-  assert.equal(snapshot.news.key, undefined);
+  assert.equal(snapshot.news, undefined);
   assert.equal(wb.storage.getItem('wb_nexus_v1'), null);
+});
+
+test('an older backup imports its records while ignoring news cache', () => {
+  const wb = loadWorkbench();
+  const data = { app: 'NEXUS', tasks: [], recurring: [], links: [], memos: [],
+    news: { cached: { international: [{ title: 'Old item' }] } } };
+  const imported = wb.normalizeImport(data);
+  assert.equal(imported.news, undefined);
+  assert.equal(imported.tasks.length, 0);
 });
 
 test('overdue duration is calculated without changing the due date', () => {

@@ -1,15 +1,20 @@
-name: Publish NEXUS Windows release
+name: Publish NEXUS desktop release
 
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: nexus-release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  release:
+  windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,25 +24,97 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-      - name: Build installers
-        run: npx electron-builder --win nsis --win portable --x64 --publish never
+      - name: Build Windows installers
+        run: npm run dist:win
       - name: Prepare portable update feed
-        run: node scripts/prepare-release.cjs
+        run: npm run release:prepare
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nexus-release-windows
+          if-no-files-found: error
+          path: |
+            dist/NEXUS-Workbench-Setup-*-win-x64.exe
+            dist/NEXUS-Workbench-Setup-*-win-x64.exe.blockmap
+            dist/NEXUS-Workbench-*-win-x64.exe
+            dist/latest.yml
+            dist/latest.json
+
+  macos:
+    runs-on: macos-latest
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Prepare macOS app icon
+        run: |
+          mkdir -p build
+          sips -z 1024 1024 desktop/assets/workbench.png --out build/mac-icon.png >/dev/null
+      - name: Build Intel and Apple silicon DMGs
+        run: npm run dist:mac
+      - name: Verify macOS artifacts
+        shell: bash
+        run: |
+          version=$(node -p "require('./package.json').version")
+          for arch in x64 arm64; do
+            test -s "dist/NEXUS-Workbench-${version}-mac-${arch}.dmg"
+            test -s "dist/NEXUS-Workbench-${version}-mac-${arch}.zip"
+            mountpoint=$(mktemp -d)
+            hdiutil attach "dist/NEXUS-Workbench-${version}-mac-${arch}.dmg" -readonly -nobrowse -mountpoint "$mountpoint" >/dev/null
+            test -d "$mountpoint/NEXUS Workbench.app"
+            test "$(plutil -extract CFBundleShortVersionString raw -o - "$mountpoint/NEXUS Workbench.app/Contents/Info.plist")" = "$version"
+            hdiutil detach "$mountpoint" >/dev/null
+            rmdir "$mountpoint"
+          done
+          test -s dist/latest-mac.yml
+          grep -q "version: ${version}" dist/latest-mac.yml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nexus-release-macos
+          if-no-files-found: error
+          path: |
+            dist/NEXUS-Workbench-*-mac-*.dmg
+            dist/NEXUS-Workbench-*-mac-*.zip
+            dist/latest-mac.yml
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: nexus-release-*
+          merge-multiple: true
+          path: dist
       - name: Publish one complete release
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
-          $version = node -p "require('./package.json').version"
-          if ($env:GITHUB_REF_NAME -ne "v$version") { throw 'Git 标签与 package.json 版本不一致' }
-          $assets = @(
-            "dist/NEXUS-Workbench-Setup-$version-win-x64.exe"
-            "dist/NEXUS-Workbench-Setup-$version-win-x64.exe.blockmap"
-            "dist/NEXUS-Workbench-$version-win-x64.exe"
-            'dist/latest.yml'
-            'dist/latest.json'
+          version=$(node -p "require('./package.json').version")
+          test "$GITHUB_REF_NAME" = "v${version}"
+          assets=(
+            "dist/NEXUS-Workbench-Setup-${version}-win-x64.exe"
+            "dist/NEXUS-Workbench-Setup-${version}-win-x64.exe.blockmap"
+            "dist/NEXUS-Workbench-${version}-win-x64.exe"
+            dist/latest.yml
+            dist/latest.json
+            "dist/NEXUS-Workbench-${version}-mac-x64.dmg"
+            "dist/NEXUS-Workbench-${version}-mac-arm64.dmg"
+            "dist/NEXUS-Workbench-${version}-mac-x64.zip"
+            "dist/NEXUS-Workbench-${version}-mac-arm64.zip"
+            dist/latest-mac.yml
           )
-          $notesFile = ".github/releases/v$version.md"
-          if (Test-Path $notesFile) { $notesArgs = @('--notes-file', $notesFile) }
-          else { $notesArgs = @('--generate-notes') }
-          gh release create $env:GITHUB_REF_NAME @assets --repo Yujay-Si/workbench --title "NEXUS 个人工作台 v$version" @notesArgs --verify-tag --latest
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          for asset in "${assets[@]}"; do test -s "$asset"; done
+          gh release create "$GITHUB_REF_NAME" "${assets[@]}" \
+            --repo Yujay-Si/workbench \
+            --title "NEXUS 个人工作台 v${version}" \
+            --notes-file ".github/releases/v${version}.md" \
+            --verify-tag --latest

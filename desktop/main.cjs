@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, ipcMain, net, protocol, shell } = require('electron');
+const { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, net, protocol, shell, Tray } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
@@ -7,6 +7,7 @@ const update = require('./update.cjs');
 const localApps = require('./local-apps.cjs');
 const { createAccountClient, LOCAL_SERVER } = require('./account-client.cjs');
 const { createServer } = require('../server/index.cjs');
+const i18n = require('../i18n/messages.js');
 
 // 固定 origin，避免便携版换目录或升级后 localStorage 被视为另一份数据。
 protocol.registerSchemesAsPrivileged([{
@@ -17,6 +18,13 @@ protocol.registerSchemesAsPrivileged([{
 // 固定目录保证新版 EXE 放到任何位置时都继续使用同一份本机数据。
 app.setPath('userData', path.join(app.getPath('appData'), 'NEXUS-Workbench'));
 const configPath = path.join(app.getPath('userData'), 'update.json');
+const languagePath = path.join(app.getPath('userData'), 'language.json');
+function readLanguage() {
+  try { return i18n.normalize(JSON.parse(fs.readFileSync(languagePath, 'utf8')).language); }
+  catch { return 'zh-CN'; }
+}
+let currentLanguage = readLanguage();
+const tr = (source) => i18n.t(source, currentLanguage);
 const accountClient = createAccountClient(path.join(app.getPath('userData'), 'server.json'));
 let localAccountService = null;
 const entryUrl = 'nexus://app/nexus-workbench.html';
@@ -24,6 +32,41 @@ const isPortable = Boolean(process.env.PORTABLE_EXECUTABLE_FILE);
 const publicFeedUrl = 'https://github.com/Yujay-Si/workbench/releases/latest/download/latest.json';
 const publicReleasePage = 'https://github.com/Yujay-Si/workbench/releases/latest';
 let updaterState = { status: 'idle' };
+let mainWindow = null;
+let tray = null;
+let isQuitting = false;
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) app.quit();
+
+function showMainWindow() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
+
+function quitApplication() {
+  isQuitting = true;
+  app.quit();
+}
+
+function ensureTray() {
+  if (!tray) {
+    const icon = process.platform === 'darwin'
+      ? nativeImage.createFromPath(path.join(__dirname, 'assets', 'workbench.png')).resize({ width: 18, height: 18 })
+      : path.join(__dirname, 'assets', 'workbench.ico');
+    tray = new Tray(icon);
+    tray.on('double-click', showMainWindow);
+  }
+  tray.setToolTip(tr('NEXUS 工作台'));
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: tr('打开 NEXUS'), click: showMainWindow },
+    { type: 'separator' },
+    { label: tr('退出 NEXUS'), click: quitApplication }
+  ]));
+}
+
+if (hasSingleInstanceLock) app.on('second-instance', showMainWindow);
 
 function publishUpdaterState(next) {
   updaterState = next;
@@ -33,7 +76,8 @@ function publishUpdaterState(next) {
 }
 
 function configureInstalledUpdater() {
-  if (isPortable || !app.isPackaged) return;
+  // Unsigned macOS builds use the Release page for manual DMG replacement.
+  if (process.platform === 'darwin' || isPortable || !app.isPackaged) return;
   autoUpdater.autoDownload = true;
   // 安装由用户在界面上确认，避免关机时触发后台安装。
   autoUpdater.autoInstallOnAppQuit = false;
@@ -66,12 +110,12 @@ function startupPage(message, detail = '', retry = false) {
   const escape = (value) => String(value).replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[char]);
-  const button = retry ? '<button id="retry">重试</button><script>document.getElementById("retry").onclick=function(){window.nexusDesktop.retryLoad()}</script>' : '';
-  const html = `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>NEXUS · 工作台</title>
+  const button = retry ? `<button id="retry">${escape(tr('重试'))}</button><script>document.getElementById("retry").onclick=function(){window.nexusDesktop.retryLoad()}</script>` : '';
+  const html = `<!doctype html><html lang="${currentLanguage}"><meta charset="utf-8"><title>${escape(tr('NEXUS · 工作台'))}</title>
     <style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#04070c;color:#dceefb;font:16px system-ui}
     main{max-width:560px;padding:32px}h1{font-size:24px}p{line-height:1.7;color:#8aa8c0}
     button{padding:10px 18px;border:1px solid #38c6f4;border-radius:8px;background:#102436;color:#dceefb;cursor:pointer}</style>
-    <main><h1>${escape(message)}</h1><p>${escape(detail)}</p>${button}</main></html>`;
+    <main><h1>${escape(tr(message))}</h1><p>${escape(tr(detail))}</p>${button}</main></html>`;
   return 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
 }
 
@@ -127,7 +171,7 @@ function loadWorkbench(win) {
         setTimeout(attempt, 400);
       } else {
         win.loadURL(startupPage('工作台加载失败',
-          `已自动重试。请点击重试；如果仍失败，请提供数据目录中的 startup.log。错误：${reason}`, true))
+          i18n.t('已自动重试。请点击重试；如果仍失败，请提供数据目录中的 startup.log。错误：{error}', currentLanguage, { error: reason }), true))
           .catch((error) => writeStartupError('错误页面显示失败：' + error.message));
       }
     }
@@ -147,8 +191,8 @@ function createWindow() {
     height: 900,
     minWidth: 900,
     minHeight: 620,
-    title: 'NEXUS · 工作台',
-    icon: path.join(__dirname, 'assets', 'workbench.ico'),
+    title: tr('NEXUS · 工作台'),
+    icon: path.join(__dirname, 'assets', process.platform === 'darwin' ? 'workbench.png' : 'workbench.ico'),
     backgroundColor: '#04070C',
     autoHideMenuBar: true,
     webPreferences: {
@@ -158,6 +202,27 @@ function createWindow() {
       sandbox: true
     }
   });
+  mainWindow = win;
+  win.on('close', (event) => {
+    if (isQuitting) return;
+    event.preventDefault();
+    const choice = dialog.showMessageBoxSync(win, {
+      type: 'question',
+      title: tr('关闭 NEXUS'),
+      message: tr('请选择关闭方式'),
+      detail: tr('仅关闭窗口后，NEXUS 会继续在后台运行。可从系统托盘或再次点击快捷方式打开。'),
+      buttons: [tr('仅关闭窗口，后台运行'), tr('关闭此软件')],
+      defaultId: 0,
+      noLink: true
+    });
+    if (choice === 0) {
+      ensureTray();
+      win.hide();
+    } else if (choice === 1) {
+      quitApplication();
+    }
+  });
+  win.on('closed', () => { if (mainWindow === win) mainWindow = null; });
   win.loadURL(startupPage('NEXUS 正在启动', '正在加载工作台，请稍候…'))
     .then(() => loadWorkbench(win))
     .catch((error) => {
@@ -180,7 +245,8 @@ function createWindow() {
 
 ipcMain.handle('nexus:update-info', () => ({
   version: app.getVersion(),
-  mode: isPortable ? 'portable' : (app.isPackaged ? 'installed' : 'development'),
+  mode: process.platform === 'darwin' && app.isPackaged ? 'mac' :
+    (isPortable ? 'portable' : (app.isPackaged ? 'installed' : 'development')),
   feedUrl: update.readFeed(configPath) || publicFeedUrl,
   releasePage: publicReleasePage,
   updateState: updaterState,
@@ -193,6 +259,7 @@ ipcMain.handle('nexus:update-save-feed', (_event, url) => {
 });
 
 ipcMain.handle('nexus:update-check', async () => {
+  if (process.platform === 'darwin') return { status: 'manual', releasePage: publicReleasePage };
   if (!isPortable) {
     if (!app.isPackaged) return { status: 'development' };
     if (['checking', 'downloading', 'downloaded'].includes(updaterState.status)) return updaterState;
@@ -204,16 +271,20 @@ ipcMain.handle('nexus:update-check', async () => {
 });
 
 ipcMain.handle('nexus:update-install', () => {
+  if (process.platform === 'darwin') throw new Error('macOS 版请从发布页手动安装 DMG');
   if (isPortable || updaterState.status !== 'downloaded') throw new Error('尚无可安装的新版本');
-  setImmediate(() => autoUpdater.quitAndInstall(false, true));
+  setImmediate(() => {
+    isQuitting = true;
+    autoUpdater.quitAndInstall(false, true);
+  });
   return true;
 });
 
 ipcMain.handle('nexus:update-choose-local', async () => {
   const result = await dialog.showOpenDialog({
-    title: '选择新版 NEXUS EXE',
+    title: tr('选择新版 NEXUS EXE'),
     properties: ['openFile'],
-    filters: [{ name: 'NEXUS 可执行文件', extensions: ['exe'] }]
+    filters: [{ name: tr('NEXUS 可执行文件'), extensions: ['exe'] }]
   });
   if (result.canceled || !result.filePaths.length) return { status: 'cancelled' };
   const chosen = result.filePaths[0];
@@ -236,6 +307,7 @@ ipcMain.handle('nexus:open-protocol', async (_event, url) => {
 });
 
 ipcMain.handle('nexus:open-local-app', async (_event, appId) => {
+  if (process.platform !== 'win32') return { status: 'unsupported' };
   const executable = localApps.findInstalledApp(appId);
   if (!executable) return { status: 'missing' };
   const error = await shell.openPath(executable);
@@ -276,14 +348,28 @@ ipcMain.handle('nexus:account-login', (event, username, password) => {
 ipcMain.handle('nexus:account-logout', (event) => { trustedAccountFrame(event); return accountClient.logout(); });
 ipcMain.handle('nexus:account-session', (event) => { trustedAccountFrame(event); return accountClient.session(); });
 ipcMain.handle('nexus:account-workspace', (event) => { trustedAccountFrame(event); return accountClient.getWorkspace(); });
+ipcMain.handle('nexus:account-backup-status', (event) => { trustedAccountFrame(event); return accountClient.backupStatus(); });
 ipcMain.handle('nexus:account-save', (event, revision, data) => {
   trustedAccountFrame(event); return accountClient.saveWorkspace(revision, data);
 });
 
-app.whenReady().then(async () => {
+ipcMain.handle('nexus:language-get', (event) => { trustedAccountFrame(event); return currentLanguage; });
+ipcMain.handle('nexus:language-set', (event, language) => {
+  trustedAccountFrame(event);
+  if (language !== 'zh-CN' && language !== 'en-US') throw new Error('Invalid language');
+  currentLanguage = language;
+  fs.mkdirSync(path.dirname(languagePath), { recursive: true });
+  fs.writeFileSync(languagePath, JSON.stringify({ language }), 'utf8');
+  if (tray) ensureTray();
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.setTitle(tr('NEXUS · 工作台'));
+  return currentLanguage;
+});
+
+if (hasSingleInstanceLock) app.whenReady().then(async () => {
   const allowed = {
     '/nexus-workbench.html': path.join(__dirname, '..', 'nexus-workbench.html'),
-    '/desktop/ui.js': path.join(__dirname, 'ui.js')
+    '/desktop/ui.js': path.join(__dirname, 'ui.js'),
+    '/i18n/messages.js': path.join(__dirname, '..', 'i18n', 'messages.js')
     ,'/auth/client.js': path.join(__dirname, '..', 'auth', 'client.js')
     ,'/auth/sync.js': path.join(__dirname, '..', 'auth', 'sync.js')
   };
@@ -297,12 +383,14 @@ app.whenReady().then(async () => {
   createWindow();
   configureInstalledUpdater();
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (mainWindow && !mainWindow.isDestroyed()) showMainWindow();
+    else createWindow();
   });
 });
 
 app.on('window-all-closed', () => app.quit());
 app.on('before-quit', () => {
+  isQuitting = true;
   if (localAccountService) {
     localAccountService.server.close();
     localAccountService.store.db.close();

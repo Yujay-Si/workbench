@@ -3,12 +3,14 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { AccountError, createAccountStore } = require('./account-store.cjs');
+const { createBackupManager } = require('./backup.cjs');
 
 const ROOT = path.join(__dirname, '..');
 const STATIC = Object.freeze({
   '/': ['nexus-workbench.html', 'text/html; charset=utf-8'],
   '/nexus-workbench.html': ['nexus-workbench.html', 'text/html; charset=utf-8'],
   '/desktop/ui.js': ['desktop/ui.js', 'text/javascript; charset=utf-8'],
+  '/i18n/messages.js': ['i18n/messages.js', 'text/javascript; charset=utf-8'],
   '/auth/client.js': ['auth/client.js', 'text/javascript; charset=utf-8']
   ,'/auth/sync.js': ['auth/sync.js', 'text/javascript; charset=utf-8']
 });
@@ -47,7 +49,9 @@ function cookieToken(request) {
 }
 
 function createServer(options = {}) {
-  const store = options.store || createAccountStore(options.databaseFile || path.join(os.homedir(), 'NEXUS-Workbench-Server', 'accounts.sqlite'));
+  const databaseFile = options.databaseFile || path.join(os.homedir(), 'NEXUS-Workbench-Server', 'accounts.sqlite');
+  const store = options.store || createAccountStore(databaseFile);
+  const backups = options.backups || (!options.store ? createBackupManager(store.db, databaseFile) : null);
   const publicUrl = options.publicUrl || '';
   const expectedOrigin = publicUrl ? new URL(publicUrl).origin : '';
   const secureCookie = expectedOrigin.startsWith('https://');
@@ -88,6 +92,7 @@ function createServer(options = {}) {
       if (url.pathname === '/api/register' && request.method === 'POST') {
         const body = await readJson(request);
         const result = await store.register(body.username, body.password);
+        backups?.markChanged?.();
         send(response, 201, { account: result.account }, { 'Set-Cookie': `${COOKIE}=${result.token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=604800${secureCookie ? '; Secure' : ''}` });
         return;
       }
@@ -104,6 +109,10 @@ function createServer(options = {}) {
         return;
       }
       if (!account) throw new AccountError('UNAUTHORIZED', '请先登录', 401);
+      if (url.pathname === '/api/backup-status' && request.method === 'GET') {
+        send(response, 200, backups ? backups.status() : { enabled: false, state: 'unavailable' });
+        return;
+      }
       if (url.pathname === '/api/logout' && request.method === 'POST') {
         store.logout(token);
         send(response, 200, { ok: true }, { 'Set-Cookie': `${COOKIE}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0${secureCookie ? '; Secure' : ''}` });
@@ -115,7 +124,9 @@ function createServer(options = {}) {
       }
       if (url.pathname === '/api/workspace' && request.method === 'PUT') {
         const body = await readJson(request);
-        send(response, 200, store.saveWorkspace(account.id, body.revision, body.data));
+        const saved = store.saveWorkspace(account.id, body.revision, body.data);
+        backups?.markChanged?.();
+        send(response, 200, saved);
         return;
       }
       send(response, 404, { error: 'Not found' });
@@ -131,7 +142,11 @@ function createServer(options = {}) {
       if (!(error instanceof AccountError)) console.error('request failed:', error);
     }
   });
-  return { server, store };
+  if (backups) {
+    server.on('listening', () => backups.start());
+    server.on('close', () => backups.stop());
+  }
+  return { server, store, backups };
 }
 
 if (require.main === module) {

@@ -5,6 +5,7 @@ const path = require('node:path');
 
 const SESSION_MS = 7 * 24 * 60 * 60 * 1000;
 const USERNAME_RE = /^[\p{L}\p{N}]{1,32}$/u;
+const REGISTER_USERNAME_RE = /^[\p{L}\p{N}]{1,12}$/u;
 const ID_RE = /^[a-z0-9_-]{1,80}$/i;
 const SCRYPT_OPTIONS = { N: 1 << 17, r: 8, p: 1, maxmem: 256 * 1024 * 1024 };
 
@@ -17,16 +18,19 @@ class AccountError extends Error {
   }
 }
 
-function normalizedUsername(value) {
-  if (typeof value !== 'string') throw new AccountError('USERNAME_INVALID', '用户名须为 1–32 位文字或数字');
+function normalizedUsername(value, registration = false) {
+  const limit = registration ? 12 : 32;
+  if (typeof value !== 'string') throw new AccountError('USERNAME_INVALID', `用户名须为 1–${limit} 位文字或数字`);
   const name = value.normalize('NFC').trim();
-  if (!USERNAME_RE.test(name)) throw new AccountError('USERNAME_INVALID', '用户名须为 1–32 位文字或数字');
+  if (!(registration ? REGISTER_USERNAME_RE : USERNAME_RE).test(name)) {
+    throw new AccountError('USERNAME_INVALID', `用户名须为 1–${limit} 位文字或数字`);
+  }
   return { name, key: name.toLowerCase() };
 }
 
 function validatePassword(value) {
   if (typeof value !== 'string' || value.length < 6 || value.length > 128 || /\s/u.test(value)) {
-    throw new AccountError('PASSWORD_INVALID', '密码须为 6–128 位且不能含空格');
+    throw new AccountError('PASSWORD_INVALID', '密码须至少 6 位、最多 128 位且不能含空格');
   }
   const types = [/[A-Z]/.test(value), /[a-z]/.test(value), /[0-9]/.test(value), /[\p{P}\p{S}]/u.test(value)];
   if (types.filter(Boolean).length < 3 || /[^\p{L}\p{N}\p{P}\p{S}]/u.test(value)) {
@@ -58,19 +62,15 @@ function safeWorkspace(input) {
       return row;
     });
   }
-  const news = input.news && typeof input.news === 'object' && !Array.isArray(input.news) ? input.news : {};
   const settings = input.settings && typeof input.settings === 'object' && !Array.isArray(input.settings) ? input.settings : {};
   const payload = {
     ...lists,
-    news: {
-      fetchedAt: news.fetchedAt || '',
-      cached: news.cached || { international: [], domestic: [], ai: [] }
-    },
     settings: {
       lastRollover: settings.lastRollover || '',
       appPack: Number(settings.appPack) || 0,
       memoSeed: Number(settings.memoSeed) || 0,
-      theme: ['dark', 'light', 'auto'].includes(settings.theme) ? settings.theme : 'dark'
+      theme: ['dark', 'light', 'auto'].includes(settings.theme) ? settings.theme : 'dark',
+      language: settings.language === 'en-US' ? 'en-US' : 'zh-CN'
     }
   };
   const serialized = JSON.stringify(payload);
@@ -121,7 +121,7 @@ function createAccountStore(filename, options = {}) {
   }
 
   async function register(username, password) {
-    const { name, key } = normalizedUsername(username);
+    const { name, key } = normalizedUsername(username, true);
     validatePassword(password);
     if (userByKey.get(key)) throw new AccountError('USERNAME_TAKEN', '用户名已存在', 409);
     const salt = crypto.randomBytes(16).toString('base64');
