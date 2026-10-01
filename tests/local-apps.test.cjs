@@ -12,7 +12,7 @@ test('desktop launcher accepts only installed executables from its allowlist', (
     const other = path.join(dir, 'other.exe');
     fs.writeFileSync(qq, '');
     fs.writeFileSync(other, '');
-    assert.equal(validExecutable('qq', qq), qq);
+    assert.equal(validExecutable('qq', qq), fs.realpathSync(qq));
     assert.equal(validExecutable('wechat', qq), '');
     assert.equal(validExecutable('qq', other), '');
     assert.equal(validExecutable('qq', path.join(dir, 'missing', 'QQ.exe')), '');

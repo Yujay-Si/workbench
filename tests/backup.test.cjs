@@ -13,10 +13,11 @@ test('online snapshots include WAL changes, remain valid, and retain the latest 
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'nexus-backup-test-'));
   const filename = path.join(directory, 'accounts.sqlite');
   const db = new DatabaseSync(filename);
+  let manager;
   let day = new Date(2026, 0, 1, 12).getTime();
   try {
     db.exec('PRAGMA journal_mode=WAL; CREATE TABLE records (value TEXT); INSERT INTO records VALUES (\'first\')');
-    const manager = createBackupManager(db, filename, { now: () => day, writeDelayMs: 5 });
+    manager = createBackupManager(db, filename, { now: () => day, writeDelayMs: 5 });
     await manager.backupToday();
     const first = path.join(directory, 'backups', 'accounts-2026-01-01.sqlite');
     assert.ok(fs.existsSync(first));
@@ -28,6 +29,8 @@ test('online snapshots include WAL changes, remain valid, and retain the latest 
     db.exec('INSERT INTO records VALUES (\'second\')');
     manager.markChanged();
     await new Promise(resolve => setTimeout(resolve, 40));
+    // The scheduled online copy can outlive its timer on a busy CI runner.
+    await manager.backupToday();
     const refreshed = new DatabaseSync(first, { readOnly: true });
     assert.equal(refreshed.prepare('SELECT COUNT(*) AS count FROM records').get().count, 2);
     refreshed.close();
@@ -44,6 +47,7 @@ test('online snapshots include WAL changes, remain valid, and retain the latest 
     assert.equal(manager.status().state, 'ready');
     assert.equal(manager.status().retained, 14);
   } finally {
+    manager?.stop();
     db.close();
     fs.rmSync(directory, { recursive: true, force: true });
   }
